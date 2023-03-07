@@ -14,11 +14,16 @@ pub struct CompanyLicense {
     pub logo_uri: String,
 
     // the evaluation of the company
-    pub evalutation: u32,
+    pub evaluation: u64,
     // add a method that only lets us change the verified status if the company is verified
     // add approveCompany function that only me the admin can sign
     // admin is an approved whitelisted wallet that we own
     pub verified: bool,
+
+    // this is to ensure that the company can only mints rewards once
+    // maybe time gate this and make it so that the company can only mint rewards once every 6 months
+    pub has_minted_rewards: bool,
+
     // TODO: figure out what the bump does exactly
     pub bump: u8,
 }

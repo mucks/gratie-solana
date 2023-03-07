@@ -20,24 +20,21 @@ declare_id!("AEf99S19YTaox9E8aX3ugpGJtHTHjaQtSY2ixtLysFGr");
 pub mod gratie_solana {
     use super::*;
 
-    // This creates a unique company license for each wallet address.
-    // Note: the name here is not unique
-    // TODO: somehow connect this to the metaplex nft
-    // TODO: find a way to make the name unique
-    // This transaction will fail if the name is too long or the wallet address already has a company license.
-    // This license can already be queried in the frontend
     pub fn create_company_license(
         ctx: Context<CreateCompanyLicense>,
         name: String,
         email: String,
         logo_uri: String,
-        evaluation: u32,
+        evaluation: u64,
         tier: u8,
     ) -> Result<()> {
         create_company_license_handler(ctx, name, email, logo_uri, evaluation, tier)
     }
 
-    // TODO: only me as the owner of the program can verify a company license
+    pub fn create_company_rewards(ctx: Context<CreateCompanyRewards>) -> Result<()> {
+        create_company_rewards_handler(ctx)
+    }
+
     pub fn verify_company_license(ctx: Context<VerifyCompanyLicense>) -> Result<()> {
         verify_company_license_handler(ctx)
     }
@@ -51,4 +48,11 @@ pub mod gratie_solana {
         mint_company_license_to_metaplex_handler(ctx, creator_key, uri, title)?;
         Ok(())
     }
+
+    // pub fn exit(ctx: Context<Ctor>) -> Result<()> {
+    //     Ok(())
+    // }
 }
+
+#[derive(Accounts)]
+pub struct ExitContext {}

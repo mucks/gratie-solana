@@ -8,6 +8,10 @@ pub enum MyError {
     EmailTooLong,
     #[msg("Uri needs to be less than 200 characters")]
     UriTooLong,
+    #[msg("Your company license is not verified yet!")]
+    CompanyLicenseNotVerified,
+    #[msg("Your company license has already minted rewards!")]
+    CompanyLicenseAlreadyMintedRewards,
     #[msg("Unauthorized, You are not an admin")]
     NotAdmin,
 }

@@ -9,31 +9,31 @@ use crate::error::MyError;
 // This transaction will fail if the name is too long or the wallet address already has a company license.
 // This license can already be queried in the frontend
 
-pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: String, email: String, logo_uri: String, evaluation: u32, tier: u8) -> Result<()> {
-        if name.as_bytes().len() > 200 {
-            return Err(MyError::NameTooLong.into());
-        }
-        if email.as_bytes().len() > 200 {
-            return Err(MyError::EmailTooLong.into());
-        }
-        if logo_uri.as_bytes().len() > 200 {
-            return Err(MyError::UriTooLong.into());
-        }
+pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: String, email: String, logo_uri: String, evaluation: u64, tier: u8) -> Result<()> {
+    if name.as_bytes().len() > 200 {
+        return Err(MyError::NameTooLong.into());
+    }
+    if email.as_bytes().len() > 200 {
+        return Err(MyError::EmailTooLong.into());
+    }
+    if logo_uri.as_bytes().len() > 200 {
+        return Err(MyError::UriTooLong.into());
+    }
 
-        let company_license = &mut ctx.accounts.company_license;
-
-
-        company_license.name = name;
-        company_license.email = email;
-        company_license.logo_uri = logo_uri;
-        company_license.evalutation = evaluation;
-        company_license.tier = tier;
+    let company_license = &mut ctx.accounts.company_license;
 
 
+    company_license.name = name;
+    company_license.email = email;
+    company_license.logo_uri = logo_uri;
+    company_license.evaluation = evaluation;
+    company_license.tier = tier;
 
-        // TODO: figure out what the bump does exactly
-        company_license.bump = *ctx.bumps.get("company_license").unwrap();
-        Ok(())
+
+
+    // TODO: figure out what the bump does exactly
+    company_license.bump = *ctx.bumps.get("company_license").unwrap();
+    Ok(())
 
 }
 
@@ -43,7 +43,7 @@ pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: 
     name: String,
     email: String,
     logo_uri: String,
-    evaluation: u32,
+    evaluation: u64,
     tier: u8
 )]
 pub struct CreateCompanyLicense<'info> {

@@ -20,11 +20,15 @@ describe("gratie-solana", () => {
     await createCompanyLicense(program, wallet);
   });
 
+  it('create-company-rewards', async () => {
+    await createCompanyRewards(program, wallet);
+  });
+
   it('verify-company-license', async () => {
     await verifyCompanyLicense(program, wallet);
   });
 
-
+  // this requires devnet for now because of the metaplex program
   // it('get-metadata', async () => {
   //   await testGetMetadata(program, wallet);
   // });
@@ -34,10 +38,62 @@ describe("gratie-solana", () => {
   // });
 });
 
+const createCompanyRewards = async (program: Program<GratieSolana>, wallet: Wallet) => {
+  const companyLicensePDA = await getCompanyLicensePDA(program, wallet);
+
+
+  const mintKey: anchor.web3.Keypair = anchor.web3.Keypair.generate();
+
+  const NftTokenAccount = await getAssociatedTokenAddress(
+    mintKey.publicKey,
+    wallet.publicKey
+  );
+
+  // TODO: move this to another function
+  const lamports: number =
+    await program.provider.connection.getMinimumBalanceForRentExemption(
+      MINT_SIZE
+    );
+
+  const mint_tx = new anchor.web3.Transaction().add(
+    anchor.web3.SystemProgram.createAccount({
+      fromPubkey: wallet.publicKey,
+      newAccountPubkey: mintKey.publicKey,
+      space: MINT_SIZE,
+      programId: TOKEN_PROGRAM_ID,
+      lamports,
+    }),
+    createInitializeMintInstruction(
+      mintKey.publicKey,
+      0,
+      wallet.publicKey,
+      wallet.publicKey
+    ),
+    createAssociatedTokenAccountInstruction(
+      wallet.publicKey,
+      NftTokenAccount,
+      wallet.publicKey,
+      mintKey.publicKey
+    )
+  );
+
+  await program.provider.sendAndConfirm(mint_tx, [mintKey]);
+
+
+  await program.methods.createCompanyRewards().accounts({
+    mintAuthority: wallet.publicKey,
+    companyLicense: companyLicensePDA,
+    mint: mintKey.publicKey,
+    tokenAccount: NftTokenAccount,
+    tokenProgram: TOKEN_PROGRAM_ID,
+  }).rpc();
+
+}
 
 const verifyCompanyLicense = async (program: Program<GratieSolana>, wallet: Wallet) => {
   const companyLicense = await getCompanyLicensePDA(program, wallet);
   await program.methods.verifyCompanyLicense().accounts({ admin: wallet.publicKey, companyLicense: companyLicense }).rpc();
+
 
   const updatedLicense = await getCompanyLicense(program, wallet);
   expect(updatedLicense.verified).to.equal(true);
@@ -65,9 +121,8 @@ const createCompanyLicense = async (program: Program<GratieSolana>, wallet: Wall
   const testName = "MucksCompany";
   const testEmail = "mail@mucks.dev";
   const testLogoUri = "https://v2.akord.com/public/vaults/active/G8DOVyi_zmdssZVa6NFY5K1gKIKVW9q7gyXGhVltbsI/gallery#public/74959dec-5113-4b8b-89a0-a1e56ce8d89e";
-  const testEvaluation = 10000;
+  const testEvaluation = new anchor.BN(100000);
   const tier = 0;
-
 
 
   await program.methods.createCompanyLicense(testName, testEmail, testLogoUri, testEvaluation, tier).accounts({
