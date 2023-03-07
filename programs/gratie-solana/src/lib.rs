@@ -38,15 +38,30 @@ pub mod gratie_solana {
         Ok(mint_metadata.collection)
     }
 
+    // This creates a unique company license for each wallet address.
+    // Note: the name here is not unique
+    // TODO: somehow connect this to the metaplex nft
+    pub fn create_company_license(ctx: Context<CreateCompanyLicense>, name: String) -> Result<()> {
+        let company_license = &mut ctx.accounts.company_license;
+        if name.as_bytes().len() > 200 {
+            return Err(MyError::NameTooLong.into());
+        }
+        company_license.name = name;
+        company_license.bump = *ctx.bumps.get("company_license").unwrap();
+        Ok(())
+    }
+    
     /*
         Will be minted by a company when they want to use our service.
         This will be a unique token for each company.
         One wallet address can only have one company license.
     */
 
+    // mint company license using metaplex
     // TODO: implement a check to see if the wallet address already has a company license.
-    pub fn mint_company_license(
-        ctx: Context<MintCompanyLicense>,
+    // TODO: use pdas to create a unique hash with the program id and the users public key
+    pub fn mint_company_license_metaplex(
+        ctx: Context<MintCompanyLicenseMetaplex>,
         creator_key: Pubkey,
         uri: String,
         title: String,
@@ -165,6 +180,12 @@ pub mod gratie_solana {
     }
 }
 
+#[error_code]
+pub enum MyError {
+    #[msg("Name needs to be less than 200 characters")]
+    NameTooLong,
+}
+
 #[derive(Accounts)]
 pub struct GetMetadata<'info> {
     #[account(mut)]
@@ -181,8 +202,33 @@ pub struct GetCompanyLicense<'info> {
     pub metadata: UncheckedAccount<'info>,
 }
 
+#[account]
+pub struct CompanyLicense {
+    tier: u8,
+    name: String,
+    bump: u8,
+}
+
+// Company License related stuff
 #[derive(Accounts)]
-pub struct MintCompanyLicense<'info> {
+pub struct CreateCompanyLicense<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    // space: 8 discriminator + 1 tier + 4 name length + 200 name + 1 bump
+    #[account(
+        init, 
+        payer = user,
+        space = 8 + 1 + 4 + 200 + 1,
+        seeds = [b"company_license".as_ref(), user.key().as_ref()],
+        bump
+    )]
+    pub company_license: Account<'info, CompanyLicense>,
+    pub system_program: Program<'info, System>,
+}
+
+// Metaplex related stuff
+#[derive(Accounts)]
+pub struct MintCompanyLicenseMetaplex<'info> {
     // ? The account of the company that is minting the license.
     #[account(mut)]
     pub mint_authority: Signer<'info>,

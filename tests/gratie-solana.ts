@@ -2,6 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { Program, Wallet, AnchorProvider, SystemProgram } from "@project-serum/anchor";
 import { GratieSolana } from "../target/types/gratie_solana";
 import { TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createInitializeMintInstruction, MINT_SIZE } from '@solana/spl-token'
+import { expect } from "chai";
 
 
 describe("gratie-solana", () => {
@@ -10,17 +11,42 @@ describe("gratie-solana", () => {
   const program = anchor.workspace.GratieSolana as Program<GratieSolana>
   const wallet = anchor.AnchorProvider.env().wallet as Wallet;
 
-  it('get-metadata', async () => {
-    await testGetMetadata(program, wallet);
+  it('create-company-license', async () => {
+
+    const [companyLicensePDA, _] = await anchor.web3.PublicKey.findProgramAddress(
+      [
+        anchor.utils.bytes.utf8.encode('company_license'),
+        wallet.publicKey.toBuffer(),
+      ],
+      program.programId
+    );
+
+    const testName = "GratieTestCompany";
+
+    await program.methods.createCompanyLicense(testName).accounts({
+      user: wallet.publicKey,
+      companyLicense: companyLicensePDA,
+    }).rpc();
+
+    expect((await program.account.companyLicense.fetch(companyLicensePDA)).name).to.equal(
+      testName
+    )
+
+
   });
 
-  it("mint-company-license", async () => {
-    await testMintCompanyLicense(program, wallet);
-  });
+
+  // it('get-metadata', async () => {
+  //   await testGetMetadata(program, wallet);
+  // });
+
+  // it("mint-company-license-metaplex", async () => {
+  //   await testMintCompanyLicenseMetaplex(program, wallet);
+  // });
 });
 
 // Note: this works on devnet but not on localnet
-const testMintCompanyLicense = async (program: Program<GratieSolana>, wallet: Wallet) => {
+const testMintCompanyLicenseMetaplex = async (program: Program<GratieSolana>, wallet: Wallet) => {
   const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey(
     "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
   );
@@ -107,7 +133,7 @@ const testMintCompanyLicense = async (program: Program<GratieSolana>, wallet: Wa
   console.log("MasterEdition: ", masterEdition.toBase58());
 
   // Transaction error 0xb can happen if uri and name are swapped
-  const tx = await program.methods.mintCompanyLicense(
+  const tx = await program.methods.mintCompanyLicenseMetaplex(
     // creator
     mintKey.publicKey,
     // uri
