@@ -1,0 +1,10 @@
+{
+  "name": "Sample Company License",
+  "symbol": "GRATIE",
+  "description": "A test for our company license",
+  "seller_fee_basis_points": 5,
+  "external_url": "",
+  "edition": "",
+  "background_color": "000000",
+  "image": "https://raw.githubusercontent.com/mucks/gratie-solana/master/assets/company-license-sample.jpg"
+}

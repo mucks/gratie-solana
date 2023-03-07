@@ -19,6 +19,7 @@ describe("gratie-solana", () => {
   // });
 });
 
+// Note: this works on devnet but not on localnet
 const testMintCompanyLicense = async (program: Program<GratieSolana>, wallet: Wallet) => {
   const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey(
     "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
@@ -107,7 +108,7 @@ const testMintCompanyLicense = async (program: Program<GratieSolana>, wallet: Wa
 
   const tx = await program.methods.mintCompanyLicense(
     mintKey.publicKey,
-    "",
+    "https://raw.githubusercontent.com/mucks/gratie-solana/master/assets/company-license-sample.jpg",
     "Sample Company License",
   )
     .accounts({
@@ -135,14 +136,12 @@ const testGetMetadata = async (program: Program<GratieSolana>, wallet: Wallet) =
   }).rpc();
   console.log(meta);
 
-  const keypair = anchor.web3.Keypair.generate();
+  // const keypair = anchor.web3.Keypair.generate();
 
+  // const collection = await program.methods.getCompanyLicense().accounts({
+  //   mintAuthority: wallet.publicKey,
+  //   metadata: keypair.publicKey,
+  // }).rpc();
 
-
-  const collection = await program.methods.getCompanyLicense().accounts({
-    mintAuthority: wallet.publicKey,
-    metadata: keypair.publicKey,
-  }).rpc();
-
-  console.log(collection);
+  // console.log(collection);
 }
