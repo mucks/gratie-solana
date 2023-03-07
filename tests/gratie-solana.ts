@@ -14,9 +14,9 @@ describe("gratie-solana", () => {
     await testGetMetadata(program, wallet);
   });
 
-  // it("mint-company-license", async () => {
-  //   await testMintCompanyLicense(program, wallet);
-  // });
+  it("mint-company-license", async () => {
+    await testMintCompanyLicense(program, wallet);
+  });
 });
 
 // Note: this works on devnet but not on localnet
@@ -106,10 +106,14 @@ const testMintCompanyLicense = async (program: Program<GratieSolana>, wallet: Wa
   console.log("Metadata address: ", metadataAddress.toBase58());
   console.log("MasterEdition: ", masterEdition.toBase58());
 
+  // Transaction error 0xb can happen if uri and name are swapped
   const tx = await program.methods.mintCompanyLicense(
+    // creator
     mintKey.publicKey,
-    "https://raw.githubusercontent.com/mucks/gratie-solana/master/assets/company-license-sample.jpg",
-    "Sample Company License",
+    // uri
+    "https://minio.mucks.dev/public/company-license-sample.json",
+    // name
+    "Gratie Sample",
   )
     .accounts({
       mintAuthority: wallet.publicKey,

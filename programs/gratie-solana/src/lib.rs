@@ -48,8 +48,8 @@ pub mod gratie_solana {
     pub fn mint_company_license(
         ctx: Context<MintCompanyLicense>,
         creator_key: Pubkey,
+        uri: String,
         title: String,
-        url: String,
     ) -> Result<()> {
         msg!("Minting Company License");
 
@@ -120,7 +120,7 @@ pub mod gratie_solana {
                 ctx.accounts.payer.key(),
                 title,
                 symbol,
-                url,
+                uri,
                 Some(creator),
                 1,
                 true,
