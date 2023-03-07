@@ -11,28 +11,17 @@ describe("gratie-solana", () => {
   const program = anchor.workspace.GratieSolana as Program<GratieSolana>
   const wallet = anchor.AnchorProvider.env().wallet as Wallet;
 
+  it('get-company-license', async () => {
+    const companyLicense = await getCompanyLicense(program, wallet);
+    console.log(companyLicense);
+  });
+
   it('create-company-license', async () => {
+    await createCompanyLicense(program, wallet);
+  });
 
-    const [companyLicensePDA, _] = await anchor.web3.PublicKey.findProgramAddress(
-      [
-        anchor.utils.bytes.utf8.encode('company_license'),
-        wallet.publicKey.toBuffer(),
-      ],
-      program.programId
-    );
-
-    const testName = "GratieTestCompany";
-
-    await program.methods.createCompanyLicense(testName).accounts({
-      user: wallet.publicKey,
-      companyLicense: companyLicensePDA,
-    }).rpc();
-
-    expect((await program.account.companyLicense.fetch(companyLicensePDA)).name).to.equal(
-      testName
-    )
-
-
+  it('verify-company-license', async () => {
+    await verifyCompanyLicense(program, wallet);
   });
 
 
@@ -44,6 +33,53 @@ describe("gratie-solana", () => {
   //   await testMintCompanyLicenseMetaplex(program, wallet);
   // });
 });
+
+
+const verifyCompanyLicense = async (program: Program<GratieSolana>, wallet: Wallet) => {
+  const companyLicense = await getCompanyLicensePDA(program, wallet);
+  await program.methods.verifyCompanyLicense().accounts({ admin: wallet.publicKey, companyLicense: companyLicense }).rpc();
+
+  const updatedLicense = await getCompanyLicense(program, wallet);
+  expect(updatedLicense.verified).to.equal(true);
+}
+
+const getCompanyLicensePDA = async (program: Program<GratieSolana>, wallet: Wallet) => {
+  const [companyLicensePDA, _] = await anchor.web3.PublicKey.findProgramAddress(
+    [
+      anchor.utils.bytes.utf8.encode('company_license'),
+      wallet.publicKey.toBuffer(),
+    ],
+    program.programId
+  );
+  return companyLicensePDA;
+}
+
+const getCompanyLicense = async (program: Program<GratieSolana>, wallet: Wallet) => {
+  const companyLicensePDA = await getCompanyLicensePDA(program, wallet);
+  return await program.account.companyLicense.fetch(companyLicensePDA);
+}
+
+const createCompanyLicense = async (program: Program<GratieSolana>, wallet: Wallet) => {
+  const companyLicensePDA = await getCompanyLicensePDA(program, wallet);
+
+  const testName = "MucksCompany";
+  const testEmail = "mail@mucks.dev";
+  const testLogoUri = "https://v2.akord.com/public/vaults/active/G8DOVyi_zmdssZVa6NFY5K1gKIKVW9q7gyXGhVltbsI/gallery#public/74959dec-5113-4b8b-89a0-a1e56ce8d89e";
+  const testEvaluation = 10000;
+  const tier = 0;
+
+
+
+  await program.methods.createCompanyLicense(testName, testEmail, testLogoUri, testEvaluation, tier).accounts({
+    user: wallet.publicKey,
+    companyLicense: companyLicensePDA,
+  }).rpc();
+
+  const companyLicense = await getCompanyLicense(program, wallet);
+
+  expect(companyLicense.name).to.equal(testName);
+}
+
 
 // Note: this works on devnet but not on localnet
 const testMintCompanyLicenseMetaplex = async (program: Program<GratieSolana>, wallet: Wallet) => {
@@ -159,19 +195,3 @@ const testMintCompanyLicenseMetaplex = async (program: Program<GratieSolana>, wa
   console.log("Your transaction signature", tx);
 };
 
-
-const testGetMetadata = async (program: Program<GratieSolana>, wallet: Wallet) => {
-  const meta = await program.methods.getMetadata().accounts({
-    mintAuthority: wallet.publicKey,
-  }).rpc();
-  console.log(meta);
-
-  // const keypair = anchor.web3.Keypair.generate();
-
-  // const collection = await program.methods.getCompanyLicense().accounts({
-  //   mintAuthority: wallet.publicKey,
-  //   metadata: keypair.publicKey,
-  // }).rpc();
-
-  // console.log(collection);
-}
