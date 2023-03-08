@@ -38,8 +38,15 @@ pub mod gratie_solana {
     }
 
     // ERC-20
-    pub fn create_company_rewards(ctx: Context<CreateCompanyRewards>) -> Result<()> {
-        create_company_rewards_handler(ctx)
+    pub fn create_company_rewards_bucket(ctx: Context<CreateCompanyRewardsBucket>) -> Result<()> {
+        create_company_rewards_bucket_handler(ctx)
+    }
+
+    pub fn transfer_company_rewards_to_user_rewards_bucket(
+        ctx: Context<TransferCompanyRewardsToUserRewardsBucket>,
+        amount: u64,
+    ) -> Result<()> {
+        transfer_company_rewards_to_user_rewards_bucket_handler(ctx, amount)
     }
 
     pub fn create_user(

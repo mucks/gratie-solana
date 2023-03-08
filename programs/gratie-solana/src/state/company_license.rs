@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 // TODO: connect this account to the nft metadata account
+// The CompanyLicense is the Account that owns everything that the company has access to
 #[account]
 #[derive(Default)]
 pub struct CompanyLicense {
@@ -25,15 +26,6 @@ pub struct CompanyLicense {
 
     // the token account of the company license
     pub token_account: Option<Pubkey>,
-    // this is to ensure that the company can only mints rewards once
-    // maybe time gate this and make it so that the company can only mint rewards once every 6 months
-    pub rewards_token_account: Option<Pubkey>,
-
-    // thats the id of the rewards_tokens
-    pub rewards_token_mint_key: Option<Pubkey>,
-
-    // this is incremented every time the company creates a user rewards bucket
-    pub user_rewards_bucket_count: u64,
 
     // TODO: figure out what the bump does exactly
     pub bump: u8,

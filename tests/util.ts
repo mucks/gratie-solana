@@ -30,7 +30,7 @@ export const createMintKeyAndTokenAccount = async (program: Program<GratieSolana
 
   const tokenAccount = await getAssociatedTokenAddress(
     mintKey.publicKey,
-    walletPublicKey
+    walletPublicKey,
   );
 
   // TODO: move this to another function

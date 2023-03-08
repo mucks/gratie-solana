@@ -1,24 +1,18 @@
 use crate::error::MyError;
 use crate::state::company_license::CompanyLicense;
+use crate::state::company_rewards_bucket::CompanyRewardsBucket;
 use anchor_lang::prelude::*;
 use anchor_spl::token;
 
-pub fn create_company_rewards_handler(ctx: Context<CreateCompanyRewards>) -> Result<()> {
+pub fn create_company_rewards_bucket_handler(
+    ctx: Context<CreateCompanyRewardsBucket>,
+) -> Result<()> {
     let company_license = &mut ctx.accounts.company_license;
 
     // Check if the company license is verified
     if !company_license.verified {
         return Err(MyError::CompanyLicenseNotVerified.into());
     }
-
-    // Check if the company license has already minted rewards
-    if company_license.rewards_token_account.is_some() {
-        return Err(MyError::CompanyLicenseAlreadyMintedRewards.into());
-    }
-
-    // if company_license.tier == 0 && company_license.user_rewards_bucket_count >= 2000 {
-    //     return Err();
-    // }
 
     // Create the tokens
     let cpi_accounts = token::MintTo {
@@ -32,18 +26,39 @@ pub fn create_company_rewards_handler(ctx: Context<CreateCompanyRewards>) -> Res
 
     token::mint_to(cpi_ctx, company_license.evaluation)?;
 
-    company_license.rewards_token_account = Some(ctx.accounts.token_account.key());
-    company_license.rewards_token_mint_key = Some(ctx.accounts.mint.key());
+    let company_rewards_bucket = &mut ctx.accounts.company_rewards_bucket;
+    company_rewards_bucket.creator = ctx.accounts.mint_authority.key();
+    company_rewards_bucket.company_license = company_license.key();
+    company_rewards_bucket.token_account = ctx.accounts.token_account.key();
+    company_rewards_bucket.token_mint_key = ctx.accounts.mint.key();
+    company_rewards_bucket.user_rewards_bucket_count = 0;
+    company_rewards_bucket.created_at = Clock::get()?.unix_timestamp;
+    
+    // TODO: figure out what the bump does exactly
+    company_rewards_bucket.bump = *ctx.bumps.get("company_rewards_bucket").ok_or(MyError::BumpNotFound)?;
 
     Ok(())
 }
 
 #[derive(Accounts)]
-pub struct CreateCompanyRewards<'info> {
+pub struct CreateCompanyRewardsBucket<'info> {
     #[account(mut)]
     pub mint_authority: Signer<'info>,
+
     #[account(mut, seeds = [b"company_license".as_ref(), mint_authority.key().as_ref()], bump = company_license.bump)]
     pub company_license: Account<'info, CompanyLicense>,
+
+    #[account(
+        init, 
+        payer = mint_authority,
+        space = CompanyRewardsBucket::LEN,
+        // seed ensures that company_license can only have one bucket
+        seeds = [b"company_rewards_bucket".as_ref(), company_license.key().as_ref()], 
+        bump
+    )]
+    pub company_rewards_bucket: Account<'info, CompanyRewardsBucket>,
+    
+    pub system_program: Program<'info, System>,
 
     /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]

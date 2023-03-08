@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use crate::{state::{user_rewards_bucket::UserRewardsBucket, company_license::{CompanyLicense, self}, user::User}, error::MyError};
+use crate::{state::{user_rewards_bucket::UserRewardsBucket, company_license::{CompanyLicense}, user::{User}, company_rewards_bucket::CompanyRewardsBucket}, error::MyError};
 
 
 // ERC-1155
@@ -7,19 +7,17 @@ pub fn create_user_rewards_bucket_handler(ctx: Context<CreateUserRewardsBucket>)
     let user_rewards_bucket = &mut ctx.accounts.user_rewards_bucket;
 
 
-    if !ctx.accounts.company_license.verified {
-        return Err(MyError::CompanyLicenseNotVerified.into());
-    }
-
-    if ctx.accounts.company_license.rewards_token_account.is_none() {
-        return Err(MyError::CompanyLicenseHasNotMintedRewards.into());
-    }
+    // if ctx.accounts.company_license.rewards_token_account.is_none() {
+    //     return Err(MyError::CompanyLicenseHasNotMintedRewards.into());
+    // }
 
     user_rewards_bucket.user = ctx.accounts.user.key();
     user_rewards_bucket.creator = ctx.accounts.mint_authority.key();
     user_rewards_bucket.token_account = ctx.accounts.token_account.key();
+    user_rewards_bucket.created_at = Clock::get()?.unix_timestamp;
 
-    ctx.accounts.company_license.user_rewards_bucket_count += 1;
+    ctx.accounts.company_rewards_bucket.user_rewards_bucket_count += 1;
+    user_rewards_bucket.bump = *ctx.bumps.get("user_rewards_bucket").ok_or(MyError::BumpNotFound)?;
 
     Ok(())
 }
@@ -33,10 +31,13 @@ pub struct CreateUserRewardsBucket<'info> {
     #[account(mut)]
     pub user: Account<'info, User>,
 
-
-    // verify the company license
     #[account(mut, seeds = [b"company_license".as_ref(), mint_authority.key().as_ref()], bump = company_license.bump)]
     pub company_license: Account<'info, CompanyLicense>,
+
+
+    #[account(mut, seeds = [b"company_rewards_bucket".as_ref(), company_license.key().as_ref()], bump = company_rewards_bucket.bump)]
+    pub company_rewards_bucket: Account<'info, CompanyRewardsBucket>,
+
     // unsure about the mint_authority_key not sure if user can then access it
     // however we need some company identifier
     // right now the seed is the static text "user_reward_bucket" + mint_authority_key + user_account_key

@@ -20,6 +20,8 @@ pub struct User {
     // the user should be incentivized to move the bucket to his own wallet
     // WARN: this is probably very unsafe!
     pub encrypted_private_key: Option<String>,
+
+    pub bump: u8,
 }
 
 impl User {

@@ -6,6 +6,7 @@ use anchor_lang::prelude::*;
 pub struct UserRewardsBucket {
     // company who created the bucket
     pub creator: Pubkey,
+    // bucket owner
     pub user: Pubkey,
 
     // where the rewards are stored

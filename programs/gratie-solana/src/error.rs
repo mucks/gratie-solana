@@ -20,4 +20,6 @@ pub enum MyError {
     NotAdmin,
     #[msg("Bump was not found on object in context")]
     BumpNotFound,
+    #[msg("Invalid Token Account")]
+    InvalidTokenAccount,
 }
