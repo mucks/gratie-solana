@@ -25,6 +25,10 @@ pub struct CompanyLicense {
     // maybe time gate this and make it so that the company can only mint rewards once every 6 months
     pub rewards_token_account: Option<Pubkey>,
 
+    // should be generated in program maybe and used to derive user_bucket keys
+    // this will be used to verify if the user is a valid user of the company
+    pub user_buckets_merkle_root: Option<Pubkey>,
+
     // TODO: figure out what the bump does exactly
     pub bump: u8,
 }

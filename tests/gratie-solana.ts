@@ -39,6 +39,10 @@ describe("gratie-solana", () => {
   // });
 });
 
+const testCreateBucket = async (program: Program<GratieSolana>, wallet: Wallet) => {
+
+}
+
 const createCompanyRewards = async (program: Program<GratieSolana>, wallet: Wallet) => {
   const companyLicensePDA = await getCompanyLicensePDA(program, wallet);
 
