@@ -33,10 +33,10 @@ pub mod gratie_solana {
 
     pub fn create_user_rewards_bucket(
         ctx: Context<CreateUserRewardsBucket>,
-        user_email: String,
+        user_id: String,
         encrypted_private_key: String,
     ) -> Result<()> {
-        create_user_rewards_bucket_handler(ctx, user_email, encrypted_private_key)
+        create_user_rewards_bucket_handler(ctx, user_id, encrypted_private_key)
     }
 
     pub fn create_company_rewards(ctx: Context<CreateCompanyRewards>) -> Result<()> {

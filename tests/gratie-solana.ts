@@ -7,7 +7,9 @@ import { createMintKeyAndTokenAccount } from "./util";
 
 
 describe("gratie-solana", () => {
-  anchor.setProvider(anchor.AnchorProvider.env());
+
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
 
   const program = anchor.workspace.GratieSolana as Program<GratieSolana>
   const wallet = anchor.AnchorProvider.env().wallet as Wallet;
@@ -29,7 +31,14 @@ describe("gratie-solana", () => {
     await verifyCompanyLicense(program, wallet);
   });
 
-  it('get-user-reward-buckets', async () => {
+  it('get-all-user-reward-buckets', async () => {
+    const buckets = await program.account.userRewardsBucket.all();
+    console.log(buckets);
+  });
+
+  it('get-all-company-licenses', async () => {
+    const companyLicenses = await program.account.companyLicense.all();
+    console.log(companyLicenses);
   });
 
   it('create-user-rewards-bucket', async () => {
@@ -53,15 +62,24 @@ const testCreateUserRewardsBucket = async (program: Program<GratieSolana>, walle
 
   const userRewardsBucketPDA = await getUserRewardsBucketPDA(program, wallet, user.publicKey);
 
+
+  const testUserEmail = "test-user@mucks.dev";
+  // this user id needs to be mapped to the user record in the comapanies database
+  // so that a user can receive it via login
+  // possibly generate a uuid here
+  // this will also be stored on chain
+  const userId = "b02b64a0-f570-40ae-a6ad-558a2531e959";
+
   // TODO: encrypt this with the companys public key and the user email and the users hashed password
   // companies have this user data usually on their database
   // INFO: even encrypted like this the company will still have full access to the bucket
   // TODO: the user needs to be notified about that and asked to change the encryption when using the bucket
   // also user password changes will cause issues with this
+  // also be encryted by userId
   const encryptedPrivateKey = user.secretKey.toString();
-  const testUserEmail = "test-user@mucks.dev";
 
-  await program.methods.createUserRewardsBucket(testUserEmail, encryptedPrivateKey).accounts({
+
+  await program.methods.createUserRewardsBucket(userId, encryptedPrivateKey).accounts({
     mintAuthority: wallet.publicKey,
     companyLicense: companyLicense,
     userRewardsBucket: userRewardsBucketPDA,

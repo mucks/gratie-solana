@@ -1,8 +1,9 @@
 use anchor_lang::prelude::*;
-use crate::{state::{user_rewards_bucket::UserRewardsBucket, company_license::CompanyLicense}, error::MyError};
+use crate::{state::{user_rewards_bucket::UserRewardsBucket, company_license::{CompanyLicense, self}}, error::MyError};
 
-pub fn create_user_rewards_bucket_handler(ctx: Context<CreateUserRewardsBucket>, user_email: String, encrypted_private_key: String) -> Result<()> {
+pub fn create_user_rewards_bucket_handler(ctx: Context<CreateUserRewardsBucket>, user_id: String, encrypted_private_key: String) -> Result<()> {
     let user_rewards_bucket = &mut ctx.accounts.user_rewards_bucket;
+
 
     if !ctx.accounts.company_license.verified {
         return Err(MyError::CompanyLicenseNotVerified.into());
@@ -15,7 +16,9 @@ pub fn create_user_rewards_bucket_handler(ctx: Context<CreateUserRewardsBucket>,
     user_rewards_bucket.creator = ctx.accounts.mint_authority.key();
     user_rewards_bucket.token_account = ctx.accounts.token_account.key();
     user_rewards_bucket.encrypted_private_key = Some(encrypted_private_key);
-    user_rewards_bucket.user_email = user_email;
+    user_rewards_bucket.user_id = user_id;
+
+    ctx.accounts.company_license.user_rewards_bucket_count += 1;
 
     Ok(())
 }

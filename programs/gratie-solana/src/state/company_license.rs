@@ -28,6 +28,9 @@ pub struct CompanyLicense {
     // maybe time gate this and make it so that the company can only mint rewards once every 6 months
     pub rewards_token_account: Option<Pubkey>,
 
+    // this is incremented every time the company creates a user rewards bucket
+    pub user_rewards_bucket_count: u64,
+
     // TODO: figure out what the bump does exactly
     pub bump: u8,
 }
