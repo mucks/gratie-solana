@@ -14,6 +14,8 @@ pub enum MyError {
     CompanyLicenseNotVerified,
     #[msg("Your company license has already minted rewards!")]
     CompanyLicenseAlreadyMintedRewards,
+    #[msg("Your company license has not minted any rewards yet!")]
+    CompanyLicenseHasNotMintedRewards,
     #[msg("Unauthorized, You are not an admin")]
     NotAdmin,
     #[msg("Bump was not found on object in context")]

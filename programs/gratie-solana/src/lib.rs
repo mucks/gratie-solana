@@ -31,6 +31,14 @@ pub mod gratie_solana {
         create_company_license_handler(ctx, name, email, logo_uri, evaluation, tier)
     }
 
+    pub fn create_user_rewards_bucket(
+        ctx: Context<CreateUserRewardsBucket>,
+        user_email: String,
+        encrypted_private_key: String,
+    ) -> Result<()> {
+        create_user_rewards_bucket_handler(ctx, user_email, encrypted_private_key)
+    }
+
     pub fn create_company_rewards(ctx: Context<CreateCompanyRewards>) -> Result<()> {
         create_company_rewards_handler(ctx)
     }

@@ -30,6 +30,7 @@ pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: 
     company_license.logo_uri = logo_uri;
     company_license.evaluation = evaluation;
     company_license.tier = tier;
+    company_license.owner = ctx.accounts.mint_authority.key();
 
     // Create the token
     let cpi_accounts = token::MintTo {

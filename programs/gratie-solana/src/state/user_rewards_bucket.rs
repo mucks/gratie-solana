@@ -1,8 +1,14 @@
 use anchor_lang::prelude::*;
 
 #[account]
+#[derive(Default)]
 pub struct UserRewardsBucket {
+    // company who created the bucket
+    pub creator: Pubkey,
     pub user: Pubkey,
+
+    pub user_email: String,
+
     // the company (in frontend) creates a private key that's encrypted with the company_name, user_email and user_password (encrypted) and some other secret
     // this keypair should be derived from the company license pubkey
     // the problem here is that the company will have full access to that private key
@@ -23,4 +29,8 @@ pub struct UserRewardsBucket {
     // timestamp when the bucket was claimed by the user
     pub claimed_at: Option<i64>,
     pub bump: u8,
+}
+
+impl UserRewardsBucket {
+    pub const LEN: usize = std::mem::size_of::<Self>() + 400;
 }

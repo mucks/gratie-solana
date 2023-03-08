@@ -29,6 +29,13 @@ describe("gratie-solana", () => {
     await verifyCompanyLicense(program, wallet);
   });
 
+  it('get-user-reward-buckets', async () => {
+  });
+
+  it('create-user-rewards-bucket', async () => {
+    await testCreateUserRewardsBucket(program, wallet);
+  });
+
   // this requires devnet for now because of the metaplex program
   // it('get-metadata', async () => {
   //   await testGetMetadata(program, wallet);
@@ -39,7 +46,29 @@ describe("gratie-solana", () => {
   // });
 });
 
-const testCreateBucket = async (program: Program<GratieSolana>, wallet: Wallet) => {
+const testCreateUserRewardsBucket = async (program: Program<GratieSolana>, wallet: Wallet) => {
+  const companyLicense = await getCompanyLicensePDA(program, wallet);
+  const { mintKey, tokenAccount } = await createMintKeyAndTokenAccount(program, wallet);
+  const user = anchor.web3.Keypair.generate();
+
+  const userRewardsBucketPDA = await getUserRewardsBucketPDA(program, wallet, user.publicKey);
+
+  // TODO: encrypt this with the companys public key and the user email and the users hashed password
+  // companies have this user data usually on their database
+  // INFO: even encrypted like this the company will still have full access to the bucket
+  // TODO: the user needs to be notified about that and asked to change the encryption when using the bucket
+  // also user password changes will cause issues with this
+  const encryptedPrivateKey = user.secretKey.toString();
+  const testUserEmail = "test-user@mucks.dev";
+
+  await program.methods.createUserRewardsBucket(testUserEmail, encryptedPrivateKey).accounts({
+    mintAuthority: wallet.publicKey,
+    companyLicense: companyLicense,
+    userRewardsBucket: userRewardsBucketPDA,
+    userAccount: user.publicKey,
+    tokenAccount: tokenAccount,
+  }).rpc();
+
 
 }
 
@@ -67,6 +96,18 @@ const verifyCompanyLicense = async (program: Program<GratieSolana>, wallet: Wall
 
   const updatedLicense = await getCompanyLicense(program, wallet);
   expect(updatedLicense.verified).to.equal(true);
+}
+
+const getUserRewardsBucketPDA = async (program: Program<GratieSolana>, wallet: Wallet, user: anchor.web3.PublicKey) => {
+  const [userRewardsBucketPDA, _] = await anchor.web3.PublicKey.findProgramAddress(
+    [
+      anchor.utils.bytes.utf8.encode('user_rewards_bucket'),
+      wallet.publicKey.toBuffer(),
+      user.toBuffer(),
+    ],
+    program.programId
+  );
+  return userRewardsBucketPDA;
 }
 
 const getCompanyLicensePDA = async (program: Program<GratieSolana>, wallet: Wallet) => {
