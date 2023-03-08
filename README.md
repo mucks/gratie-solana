@@ -14,3 +14,8 @@
 
 * changing structure of accounts in the src/state folder might break the tests because existing accounts on the network will have a different structure
 * it would be great to have metaplex on the localnet
+
+### Metaplex solana test validator
+* clone this repo: [metpaplex](https://github.com/metaplex-foundation/js)
+* run yarn && yarn amman:start
+* go to [amman](https://amman-explorer.metaplex.com/) in your browser;

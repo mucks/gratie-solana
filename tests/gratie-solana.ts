@@ -3,6 +3,7 @@ import { Program, Wallet, AnchorProvider, SystemProgram } from "@project-serum/a
 import { GratieSolana } from "../target/types/gratie_solana";
 import { TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createInitializeMintInstruction, MINT_SIZE } from '@solana/spl-token'
 import { expect } from "chai";
+import { createMintKeyAndTokenAccount } from "./util";
 
 
 describe("gratie-solana", () => {
@@ -41,54 +42,19 @@ describe("gratie-solana", () => {
 const createCompanyRewards = async (program: Program<GratieSolana>, wallet: Wallet) => {
   const companyLicensePDA = await getCompanyLicensePDA(program, wallet);
 
-
-  const mintKey: anchor.web3.Keypair = anchor.web3.Keypair.generate();
-
-  const NftTokenAccount = await getAssociatedTokenAddress(
-    mintKey.publicKey,
-    wallet.publicKey
-  );
-
-  // TODO: move this to another function
-  const lamports: number =
-    await program.provider.connection.getMinimumBalanceForRentExemption(
-      MINT_SIZE
-    );
-
-  const mint_tx = new anchor.web3.Transaction().add(
-    anchor.web3.SystemProgram.createAccount({
-      fromPubkey: wallet.publicKey,
-      newAccountPubkey: mintKey.publicKey,
-      space: MINT_SIZE,
-      programId: TOKEN_PROGRAM_ID,
-      lamports,
-    }),
-    createInitializeMintInstruction(
-      mintKey.publicKey,
-      0,
-      wallet.publicKey,
-      wallet.publicKey
-    ),
-    createAssociatedTokenAccountInstruction(
-      wallet.publicKey,
-      NftTokenAccount,
-      wallet.publicKey,
-      mintKey.publicKey
-    )
-  );
-
-  await program.provider.sendAndConfirm(mint_tx, [mintKey]);
+  const { mintKey, tokenAccount } = await createMintKeyAndTokenAccount(program, wallet);
 
 
   await program.methods.createCompanyRewards().accounts({
     mintAuthority: wallet.publicKey,
     companyLicense: companyLicensePDA,
     mint: mintKey.publicKey,
-    tokenAccount: NftTokenAccount,
+    tokenAccount: tokenAccount,
     tokenProgram: TOKEN_PROGRAM_ID,
   }).rpc();
 
 }
+
 
 const verifyCompanyLicense = async (program: Program<GratieSolana>, wallet: Wallet) => {
   const companyLicense = await getCompanyLicensePDA(program, wallet);
@@ -124,10 +90,15 @@ const createCompanyLicense = async (program: Program<GratieSolana>, wallet: Wall
   const testEvaluation = new anchor.BN(100000);
   const tier = 0;
 
+  const { mintKey, tokenAccount } = await createMintKeyAndTokenAccount(program, wallet);
+
 
   await program.methods.createCompanyLicense(testName, testEmail, testLogoUri, testEvaluation, tier).accounts({
-    user: wallet.publicKey,
+    mintAuthority: wallet.publicKey,
     companyLicense: companyLicensePDA,
+    mint: mintKey.publicKey,
+    tokenAccount: tokenAccount,
+    tokenProgram: TOKEN_PROGRAM_ID,
   }).rpc();
 
   const companyLicense = await getCompanyLicense(program, wallet);

@@ -20,9 +20,10 @@ pub struct CompanyLicense {
     // admin is an approved whitelisted wallet that we own
     pub verified: bool,
 
+    pub token_account: Option<Pubkey>,
     // this is to ensure that the company can only mints rewards once
     // maybe time gate this and make it so that the company can only mint rewards once every 6 months
-    pub has_minted_rewards: bool,
+    pub rewards_token_account: Option<Pubkey>,
 
     // TODO: figure out what the bump does exactly
     pub bump: u8,

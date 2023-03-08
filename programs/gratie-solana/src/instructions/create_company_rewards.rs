@@ -12,10 +12,11 @@ pub fn create_company_rewards_handler(ctx: Context<CreateCompanyRewards>) -> Res
     }
 
     // Check if the company license has already minted rewards
-    if company_license.has_minted_rewards {
+    if company_license.rewards_token_account.is_some() {
         return Err(MyError::CompanyLicenseAlreadyMintedRewards.into());
     }
 
+    // Create the tokens
     let cpi_accounts = token::MintTo {
         mint: ctx.accounts.mint.to_account_info(),
         to: ctx.accounts.token_account.to_account_info(),
@@ -27,7 +28,7 @@ pub fn create_company_rewards_handler(ctx: Context<CreateCompanyRewards>) -> Res
 
     token::mint_to(cpi_ctx, company_license.evaluation)?;
 
-    company_license.has_minted_rewards = true;
+    company_license.rewards_token_account = Some(ctx.accounts.token_account.key());
 
     Ok(())
 }
