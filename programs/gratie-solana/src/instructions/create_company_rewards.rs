@@ -16,6 +16,10 @@ pub fn create_company_rewards_handler(ctx: Context<CreateCompanyRewards>) -> Res
         return Err(MyError::CompanyLicenseAlreadyMintedRewards.into());
     }
 
+    // if company_license.tier == 0 && company_license.user_rewards_bucket_count >= 2000 {
+    //     return Err();
+    // }
+
     // Create the tokens
     let cpi_accounts = token::MintTo {
         mint: ctx.accounts.mint.to_account_info(),
@@ -29,6 +33,7 @@ pub fn create_company_rewards_handler(ctx: Context<CreateCompanyRewards>) -> Res
     token::mint_to(cpi_ctx, company_license.evaluation)?;
 
     company_license.rewards_token_account = Some(ctx.accounts.token_account.key());
+    company_license.rewards_token_mint_key = Some(ctx.accounts.mint.key());
 
     Ok(())
 }

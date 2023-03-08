@@ -3,7 +3,7 @@ import { Program, Wallet, AnchorProvider, SystemProgram } from "@project-serum/a
 import { GratieSolana } from "../target/types/gratie_solana";
 import { TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createInitializeMintInstruction, MINT_SIZE } from '@solana/spl-token'
 import { expect } from "chai";
-import { createMintKeyAndTokenAccount } from "./util";
+import { createMintKeyAndTokenAccount, createTokenAccountForMint } from "./util";
 
 
 describe("gratie-solana", () => {
@@ -41,8 +41,12 @@ describe("gratie-solana", () => {
     console.log(companyLicenses);
   });
 
-  it('create-user-rewards-bucket', async () => {
-    await testCreateUserRewardsBucket(program, wallet);
+  it('create-user-and-create-user-reward-bucket', async () => {
+    const user = await testCreateUser(program, wallet);
+
+    console.log('CREATED USER SUCCESSFULLY');
+
+    await testCreateUserRewardsBucket(program, wallet, user);
   });
 
   // this requires devnet for now because of the metaplex program
@@ -55,13 +59,11 @@ describe("gratie-solana", () => {
   // });
 });
 
-const testCreateUserRewardsBucket = async (program: Program<GratieSolana>, wallet: Wallet) => {
+const testCreateUser = async (program: Program<GratieSolana>, wallet: Wallet) => {
   const companyLicense = await getCompanyLicensePDA(program, wallet);
-  const { mintKey, tokenAccount } = await createMintKeyAndTokenAccount(program, wallet);
+
+  //TODO:  probably have to add this keypair to chain before or something
   const user = anchor.web3.Keypair.generate();
-
-  const userRewardsBucketPDA = await getUserRewardsBucketPDA(program, wallet, user.publicKey);
-
 
   const testUserEmail = "test-user@mucks.dev";
   // this user id needs to be mapped to the user record in the comapanies database
@@ -79,11 +81,34 @@ const testCreateUserRewardsBucket = async (program: Program<GratieSolana>, walle
   const encryptedPrivateKey = user.secretKey.toString();
 
 
-  await program.methods.createUserRewardsBucket(userId, encryptedPrivateKey).accounts({
+  const userPDA = await getUserPDA(program, companyLicense, user.publicKey);
+
+  await program.methods.createUser(userId, encryptedPrivateKey).accounts({
     mintAuthority: wallet.publicKey,
-    companyLicense: companyLicense,
-    userRewardsBucket: userRewardsBucketPDA,
     userAccount: user.publicKey,
+    companyLicense: companyLicense,
+    user: userPDA,
+  }).rpc();
+
+  return user.publicKey;
+};
+
+const testCreateUserRewardsBucket = async (program: Program<GratieSolana>, wallet: Wallet, userPublicKey: anchor.web3.PublicKey) => {
+  const companyLicensePDA = await getCompanyLicensePDA(program, wallet);
+  const companyLicense = await program.account.companyLicense.fetch(companyLicensePDA);
+
+  const userPDA = await getUserPDA(program, companyLicensePDA, userPublicKey);
+  const userRewardsBucketPDA = await getUserRewardsBucketPDA(program, userPDA);
+
+  const tokenAccount = await createTokenAccountForMint(program, wallet.publicKey, companyLicense.rewardsTokenMintKey, userPublicKey);
+
+  console.log('CREATING USER REWARDS BUCKET TOKEN ACCOUNT');
+
+  await program.methods.createUserRewardsBucket().accounts({
+    mintAuthority: wallet.publicKey,
+    companyLicense: companyLicensePDA,
+    userRewardsBucket: userRewardsBucketPDA,
+    user: userPDA,
     tokenAccount: tokenAccount,
   }).rpc();
 
@@ -93,7 +118,7 @@ const testCreateUserRewardsBucket = async (program: Program<GratieSolana>, walle
 const createCompanyRewards = async (program: Program<GratieSolana>, wallet: Wallet) => {
   const companyLicensePDA = await getCompanyLicensePDA(program, wallet);
 
-  const { mintKey, tokenAccount } = await createMintKeyAndTokenAccount(program, wallet);
+  const { mintKey, tokenAccount } = await createMintKeyAndTokenAccount(program, wallet.publicKey);
 
 
   await program.methods.createCompanyRewards().accounts({
@@ -116,16 +141,27 @@ const verifyCompanyLicense = async (program: Program<GratieSolana>, wallet: Wall
   expect(updatedLicense.verified).to.equal(true);
 }
 
-const getUserRewardsBucketPDA = async (program: Program<GratieSolana>, wallet: Wallet, user: anchor.web3.PublicKey) => {
+const getUserRewardsBucketPDA = async (program: Program<GratieSolana>, user: anchor.web3.PublicKey) => {
   const [userRewardsBucketPDA, _] = await anchor.web3.PublicKey.findProgramAddress(
     [
       anchor.utils.bytes.utf8.encode('user_rewards_bucket'),
-      wallet.publicKey.toBuffer(),
       user.toBuffer(),
     ],
     program.programId
   );
   return userRewardsBucketPDA;
+}
+
+const getUserPDA = async (program: Program<GratieSolana>, companyLicensePublicKey: anchor.web3.PublicKey, userAccountPublicKey: anchor.web3.PublicKey) => {
+  const [userPDA, _] = await anchor.web3.PublicKey.findProgramAddress(
+    [
+      anchor.utils.bytes.utf8.encode('user'),
+      companyLicensePublicKey.toBuffer(),
+      userAccountPublicKey.toBuffer(),
+    ],
+    program.programId
+  );
+  return userPDA;
 }
 
 const getCompanyLicensePDA = async (program: Program<GratieSolana>, wallet: Wallet) => {
@@ -153,7 +189,7 @@ const createCompanyLicense = async (program: Program<GratieSolana>, wallet: Wall
   const testEvaluation = new anchor.BN(100000);
   const tier = 0;
 
-  const { mintKey, tokenAccount } = await createMintKeyAndTokenAccount(program, wallet);
+  const { mintKey, tokenAccount } = await createMintKeyAndTokenAccount(program, wallet.publicKey);
 
 
   await program.methods.createCompanyLicense(testName, testEmail, testLogoUri, testEvaluation, tier).accounts({

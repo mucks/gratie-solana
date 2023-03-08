@@ -3,12 +3,34 @@ import { Program, Wallet, SystemProgram } from "@project-serum/anchor";
 import { GratieSolana } from "../target/types/gratie_solana";
 import { TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createInitializeMintInstruction, MINT_SIZE } from '@solana/spl-token'
 
-export const createMintKeyAndTokenAccount = async (program: Program<GratieSolana>, wallet: Wallet) => {
+
+export const createTokenAccountForMint = async (program: Program<GratieSolana>, walletPublicKey: anchor.web3.PublicKey, mintKey: anchor.web3.PublicKey, user: anchor.web3.PublicKey) => {
+  const tokenAccount = await getAssociatedTokenAddress(
+    mintKey,
+    user
+  );
+
+  const tx = new anchor.web3.Transaction().add(
+    createAssociatedTokenAccountInstruction(
+      walletPublicKey,
+      tokenAccount,
+      user,
+      mintKey
+    )
+  );
+
+  await program.provider.sendAndConfirm(tx, []);
+
+  return tokenAccount;
+
+};
+
+export const createMintKeyAndTokenAccount = async (program: Program<GratieSolana>, walletPublicKey: anchor.web3.PublicKey) => {
   const mintKey: anchor.web3.Keypair = anchor.web3.Keypair.generate();
 
   const tokenAccount = await getAssociatedTokenAddress(
     mintKey.publicKey,
-    wallet.publicKey
+    walletPublicKey
   );
 
   // TODO: move this to another function
@@ -19,7 +41,7 @@ export const createMintKeyAndTokenAccount = async (program: Program<GratieSolana
 
   const mint_tx = new anchor.web3.Transaction().add(
     anchor.web3.SystemProgram.createAccount({
-      fromPubkey: wallet.publicKey,
+      fromPubkey: walletPublicKey,
       newAccountPubkey: mintKey.publicKey,
       space: MINT_SIZE,
       programId: TOKEN_PROGRAM_ID,
@@ -28,13 +50,13 @@ export const createMintKeyAndTokenAccount = async (program: Program<GratieSolana
     createInitializeMintInstruction(
       mintKey.publicKey,
       0,
-      wallet.publicKey,
-      wallet.publicKey
+      walletPublicKey,
+      walletPublicKey
     ),
     createAssociatedTokenAccountInstruction(
-      wallet.publicKey,
+      walletPublicKey,
       tokenAccount,
-      wallet.publicKey,
+      walletPublicKey,
       mintKey.publicKey
     )
   );

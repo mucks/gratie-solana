@@ -1,22 +1,23 @@
 use anchor_lang::prelude::*;
-use crate::{state::{user_rewards_bucket::UserRewardsBucket, company_license::{CompanyLicense, self}}, error::MyError};
+use crate::{state::{user_rewards_bucket::UserRewardsBucket, company_license::{CompanyLicense, self}, user::User}, error::MyError};
 
-pub fn create_user_rewards_bucket_handler(ctx: Context<CreateUserRewardsBucket>, user_id: String, encrypted_private_key: String) -> Result<()> {
+
+// ERC-1155
+pub fn create_user_rewards_bucket_handler(ctx: Context<CreateUserRewardsBucket>) -> Result<()> {
     let user_rewards_bucket = &mut ctx.accounts.user_rewards_bucket;
 
 
     if !ctx.accounts.company_license.verified {
         return Err(MyError::CompanyLicenseNotVerified.into());
     }
+
     if ctx.accounts.company_license.rewards_token_account.is_none() {
         return Err(MyError::CompanyLicenseHasNotMintedRewards.into());
     }
 
-    user_rewards_bucket.user = ctx.accounts.user_account.key();
+    user_rewards_bucket.user = ctx.accounts.user.key();
     user_rewards_bucket.creator = ctx.accounts.mint_authority.key();
     user_rewards_bucket.token_account = ctx.accounts.token_account.key();
-    user_rewards_bucket.encrypted_private_key = Some(encrypted_private_key);
-    user_rewards_bucket.user_id = user_id;
 
     ctx.accounts.company_license.user_rewards_bucket_count += 1;
 
@@ -25,17 +26,12 @@ pub fn create_user_rewards_bucket_handler(ctx: Context<CreateUserRewardsBucket>,
 // Create user reward buckets from a common merkle root
 
 #[derive(Accounts)]
-#[instruction(
-    user_email: String,
-    encrypted_private_key: String
-)]
 pub struct CreateUserRewardsBucket<'info> {
     #[account(mut)]
     pub mint_authority: Signer<'info>,
     
-    /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
-    pub user_account: AccountInfo<'info>,
+    pub user: Account<'info, User>,
 
 
     // verify the company license
@@ -51,8 +47,7 @@ pub struct CreateUserRewardsBucket<'info> {
         init, 
         payer = mint_authority,
         space = UserRewardsBucket::LEN,
-        // maybe use user email here as seed
-        seeds = [b"user_rewards_bucket".as_ref(), mint_authority.key().as_ref(), user_account.key().as_ref()], 
+        seeds = [b"user_rewards_bucket".as_ref(), user.key().as_ref()], 
         bump
     )]
     pub user_rewards_bucket: Account<'info, UserRewardsBucket>,

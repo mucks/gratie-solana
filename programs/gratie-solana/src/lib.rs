@@ -20,6 +20,7 @@ declare_id!("AEf99S19YTaox9E8aX3ugpGJtHTHjaQtSY2ixtLysFGr");
 pub mod gratie_solana {
     use super::*;
 
+    // ERC-721
     pub fn create_company_license(
         ctx: Context<CreateCompanyLicense>,
         name: String,
@@ -31,16 +32,22 @@ pub mod gratie_solana {
         create_company_license_handler(ctx, name, email, logo_uri, evaluation, tier)
     }
 
-    pub fn create_user_rewards_bucket(
-        ctx: Context<CreateUserRewardsBucket>,
+    // ERC-1155
+    pub fn create_user_rewards_bucket(ctx: Context<CreateUserRewardsBucket>) -> Result<()> {
+        create_user_rewards_bucket_handler(ctx)
+    }
+
+    // ERC-20
+    pub fn create_company_rewards(ctx: Context<CreateCompanyRewards>) -> Result<()> {
+        create_company_rewards_handler(ctx)
+    }
+
+    pub fn create_user(
+        ctx: Context<CreateUser>,
         user_id: String,
         encrypted_private_key: String,
     ) -> Result<()> {
-        create_user_rewards_bucket_handler(ctx, user_id, encrypted_private_key)
-    }
-
-    pub fn create_company_rewards(ctx: Context<CreateCompanyRewards>) -> Result<()> {
-        create_company_rewards_handler(ctx)
+        create_user_handler(ctx, user_id, encrypted_private_key)
     }
 
     pub fn verify_company_license(ctx: Context<VerifyCompanyLicense>) -> Result<()> {
