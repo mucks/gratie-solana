@@ -53,12 +53,12 @@ describe("gratie-solana", () => {
 });
 
 const transferTokensToUser = async (program: Program<GratieSolana>, wallet: Wallet, user: anchor.web3.PublicKey, amount: anchor.BN) => {
-  const companyLicensePDA = await getCompanyLicensePDA(program, wallet);
-  const companyRewardsBucketPDA = await getCompanyRewardsBucketPDA(program, companyLicensePDA);
+  const companyLicensePDA = getCompanyLicensePDA(program, wallet);
+  const companyRewardsBucketPDA = getCompanyRewardsBucketPDA(program, companyLicensePDA);
   const companyRewardsBucket = await program.account.companyRewardsBucket.fetch(companyRewardsBucketPDA);
 
-  const userPDA = await getUserPDA(program, companyLicensePDA, user);
-  const userRewardsBucketPDA = await getUserRewardsBucketPDA(program, userPDA);
+  const userPDA = getUserPDA(program, companyLicensePDA, user);
+  const userRewardsBucketPDA = getUserRewardsBucketPDA(program, userPDA);
 
   const userRewardsBucket = await program.account.userRewardsBucket.fetch(userRewardsBucketPDA);
 
@@ -87,8 +87,8 @@ const createUser = async (program: Program<GratieSolana>, wallet: Wallet) => {
   //TODO:  probably have to add this keypair to chain before or something
   const user = anchor.web3.Keypair.generate();
 
-  const companyLicense = await getCompanyLicensePDA(program, wallet);
-  const userPDA = await getUserPDA(program, companyLicense, user.publicKey);
+  const companyLicense = getCompanyLicensePDA(program, wallet);
+  const userPDA = getUserPDA(program, companyLicense, user.publicKey);
 
   const testUserEmail = "test-user@mucks.dev";
   // this user id needs to be mapped to the user record in the comapanies database
@@ -117,13 +117,13 @@ const createUser = async (program: Program<GratieSolana>, wallet: Wallet) => {
 };
 
 const createUserRewardsBucket = async (program: Program<GratieSolana>, wallet: Wallet, userPublicKey: anchor.web3.PublicKey) => {
-  const companyLicensePDA = await getCompanyLicensePDA(program, wallet);
-  const companyRewardsBucketPDA = await getCompanyRewardsBucketPDA(program, companyLicensePDA);
+  const companyLicensePDA = getCompanyLicensePDA(program, wallet);
+  const companyRewardsBucketPDA = getCompanyRewardsBucketPDA(program, companyLicensePDA);
   const companyRewardsBucket = await getCompanyRewardsBucket(program, companyLicensePDA);
   const tokenMintPubkey = companyRewardsBucket.tokenMintKey;
 
-  const userPDA = await getUserPDA(program, companyLicensePDA, userPublicKey);
-  const userRewardsBucketPDA = await getUserRewardsBucketPDA(program, userPDA);
+  const userPDA = getUserPDA(program, companyLicensePDA, userPublicKey);
+  const userRewardsBucketPDA = getUserRewardsBucketPDA(program, userPDA);
 
   const tokenAccount = await createTokenAccountForMint(program, wallet.publicKey, tokenMintPubkey, userPublicKey);
 
@@ -141,8 +141,8 @@ const createUserRewardsBucket = async (program: Program<GratieSolana>, wallet: W
 }
 
 const createCompanyRewardsBucket = async (program: Program<GratieSolana>, wallet: Wallet) => {
-  const companyLicensePDA = await getCompanyLicensePDA(program, wallet);
-  const companyRewardsBucketPDA = await getCompanyRewardsBucketPDA(program, companyLicensePDA);
+  const companyLicensePDA = getCompanyLicensePDA(program, wallet);
+  const companyRewardsBucketPDA = getCompanyRewardsBucketPDA(program, companyLicensePDA);
 
   const { mintKey, tokenAccount } = await createMintKeyAndTokenAccount(program, wallet.publicKey);
 
@@ -160,7 +160,7 @@ const createCompanyRewardsBucket = async (program: Program<GratieSolana>, wallet
 
 
 const verifyCompanyLicense = async (program: Program<GratieSolana>, wallet: Wallet) => {
-  const companyLicense = await getCompanyLicensePDA(program, wallet);
+  const companyLicense = getCompanyLicensePDA(program, wallet);
   await program.methods.verifyCompanyLicense().accounts({ admin: wallet.publicKey, companyLicense: companyLicense }).rpc();
 
 
@@ -169,7 +169,7 @@ const verifyCompanyLicense = async (program: Program<GratieSolana>, wallet: Wall
 }
 
 const createCompanyLicense = async (program: Program<GratieSolana>, wallet: Wallet) => {
-  const companyLicensePDA = await getCompanyLicensePDA(program, wallet);
+  const companyLicensePDA = getCompanyLicensePDA(program, wallet);
 
   const testName = "MucksCompany";
   const testEmail = "mail@mucks.dev";
