@@ -9,7 +9,7 @@ use anchor_spl::token;
 // This transaction will fail if the name is too long or the wallet address already has a company license.
 // This license can already be queried in the frontend
 
-pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: String, email: String, logo_uri: String, evaluation: u64, tier_type: u8) -> Result<()> {
+pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: String, email: String, logo_uri: String, evaluation: u64, tier_id: u8) -> Result<()> {
     if ctx.accounts.company_license.token_account.is_some() {
         return Err(MyError::CompanyLicenseAlreadyExists.into());
     }
@@ -29,7 +29,7 @@ pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: 
     company_license.email = email;
     company_license.logo_uri = logo_uri;
     company_license.evaluation = evaluation;
-    company_license.tier_type = tier_type;
+    company_license.tier_id = tier_id;
     company_license.owner = ctx.accounts.mint_authority.key();
 
     // Create the token
@@ -61,7 +61,7 @@ pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: 
     email: String,
     logo_uri: String,
     evaluation: u64,
-    tier_type: u8
+    tier_id: u8
 )]
 pub struct CreateCompanyLicense<'info> {
     #[account(mut)]

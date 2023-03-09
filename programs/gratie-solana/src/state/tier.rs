@@ -8,12 +8,13 @@ use anchor_lang::prelude::*;
 #[account]
 pub struct Tier {
     pub creator: Pubkey,
-    pub tier_type: u8,
+    pub id: u8,
     pub name: String,
-    pub free_user_limit: u64,
+    pub free_user_limit: u32,
     pub price_lamports: u64,
     pub additional_user_price_lamports: u64,
-    pub platform_fee_percentage: u64,
+    // 1/1000 can be changed to allow more precision
+    pub platform_fee_permille: u16,
     pub bump: u8,
 }
 impl Tier {

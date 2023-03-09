@@ -3,14 +3,25 @@ import { Program, Wallet } from "@project-serum/anchor";
 import { GratieSolana } from "../target/types/gratie_solana";
 
 
-const getPDA = (program: Program<GratieSolana>, id: string, keys: (anchor.web3.PublicKey | string)[]) => {
+const getPDA = (program: Program<GratieSolana>, id: string, keys: (anchor.web3.PublicKey | string | number)[]) => {
   const [pda, _] = anchor.web3.PublicKey.findProgramAddressSync(
     [
       anchor.utils.bytes.utf8.encode(id),
       ...keys.map((key) => {
         if (typeof key === 'string') {
           return anchor.utils.bytes.utf8.encode(key);
-        } else {
+        } else if (typeof key === 'number') {
+          if (key < 0) {
+            throw new Error('negative number');
+          }
+
+          if (key <= 255) {
+            return new Uint8Array([key]);
+          }
+
+          throw new Error('number too big');
+        }
+        else {
           return key.toBuffer()
         }
       }),
@@ -18,6 +29,10 @@ const getPDA = (program: Program<GratieSolana>, id: string, keys: (anchor.web3.P
     program.programId
   );
   return pda;
+}
+
+export const getTierPDA = (program: Program<GratieSolana>, tierID: number) => {
+  return getPDA(program, 'tier', [tierID]);
 }
 
 export const getUserPDA = (program: Program<GratieSolana>, companyLicensePublicKey: anchor.web3.PublicKey, user_id: string) => {

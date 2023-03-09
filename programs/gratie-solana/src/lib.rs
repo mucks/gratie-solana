@@ -27,9 +27,9 @@ pub mod gratie_solana {
         email: String,
         logo_uri: String,
         evaluation: u64,
-        tier_type: u8,
+        tier_id: u8,
     ) -> Result<()> {
-        create_company_license_handler(ctx, name, email, logo_uri, evaluation, tier_type)
+        create_company_license_handler(ctx, name, email, logo_uri, evaluation, tier_id)
     }
 
     // ERC-1155
@@ -78,6 +78,26 @@ pub mod gratie_solana {
     ) -> Result<()> {
         mint_company_license_to_metaplex_handler(ctx, creator_key, uri, title)?;
         Ok(())
+    }
+
+    pub fn create_tier(
+        ctx: Context<CreateTier>,
+        id: u8,
+        name: String,
+        free_user_limit: u32,
+        price_lamports: u64,
+        additional_user_price_lamports: u64,
+        platform_fee_permille: u16,
+    ) -> Result<()> {
+        create_tier_handler(
+            ctx,
+            id,
+            name,
+            free_user_limit,
+            price_lamports,
+            additional_user_price_lamports,
+            platform_fee_permille,
+        )
     }
 
     // pub fn exit(ctx: Context<Ctor>) -> Result<()> {

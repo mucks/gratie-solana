@@ -5,12 +5,11 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(Default)]
 pub struct CompanyLicense {
-    // the tier of the company (small, midsized, large, etc)
-    // TierType is an enum that has the different tiers
-    pub tier_type: u8,
-
     // owner of the company_license nft
     pub owner: Pubkey,
+
+    // the tier of the company (small, midsized, large, etc)
+    pub tier_id: u8,
 
     pub name: String,
     pub email: String,

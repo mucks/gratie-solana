@@ -5,10 +5,11 @@ import { TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, getAssociate
 import { expect } from "chai";
 import { createMintKeyAndTokenAccount, createTokenAccountForMint } from "./util";
 import { getCompanyLicense, getCompanyLicensePDA, getCompanyRewardsBucket, getCompanyRewardsBucketPDA, getUserPDA, getUserRewardsBucketPDA } from "./pda";
+import { createTier } from "./tier";
 
 
 // THIS needs to be unique!
-const COMPANY_NAME = "test_company_4";
+const COMPANY_NAME = "test_company_5";
 // userID could be a sha of the user email to help identify them
 const USER_ID = "b02b64a0-f570-40aF";
 
@@ -20,6 +21,10 @@ describe("gratie-solana", () => {
   const program = anchor.workspace.GratieSolana as Program<GratieSolana>
   const wallet = anchor.AnchorProvider.env().wallet as Wallet;
 
+
+  it("create-tier", async () => {
+    await createTier(program, wallet.publicKey);
+  });
 
   it('create-company-license', async () => {
     await createCompanyLicense(program, wallet);
@@ -86,6 +91,7 @@ const getAllUserRewardsBuckets = async (program: Program<GratieSolana>) => {
   return await program.account.userRewardsBucket.all();
 }
 
+
 const createUser = async (program: Program<GratieSolana>, wallet: Wallet) => {
 
   //TODO:  probably have to add this keypair to chain before or something
@@ -127,7 +133,6 @@ const createUserRewardsBucket = async (program: Program<GratieSolana>, wallet: W
 
   const tokenAccount = await createTokenAccountForMint(program, wallet.publicKey, tokenMintPubkey, user.owner);
 
-  console.log('CREATED USER REWARDS BUCKET');
 
   await program.methods.createUserRewardsBucket(COMPANY_NAME).accounts({
     mintAuthority: wallet.publicKey,
@@ -179,7 +184,6 @@ const createCompanyLicense = async (program: Program<GratieSolana>, wallet: Wall
 
   const { mintKey, tokenAccount } = await createMintKeyAndTokenAccount(program, wallet.publicKey);
 
-  console.log("CREATED COMPANY LICENSE TOKEN ACCOUNTS");
 
   await program.methods.createCompanyLicense(COMPANY_NAME, testEmail, testLogoUri, testEvaluation, tier).accounts({
     mintAuthority: wallet.publicKey,
