@@ -1,17 +1,21 @@
 import * as anchor from "@project-serum/anchor";
-import { Program, Wallet, AnchorProvider, SystemProgram } from "@project-serum/anchor";
+import { Program, Wallet } from "@project-serum/anchor";
 import { GratieSolana } from "../target/types/gratie_solana";
-import { TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createInitializeMintInstruction, MINT_SIZE } from '@solana/spl-token'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { expect } from "chai";
 import { createMintKeyAndTokenAccount, createTokenAccountForMint } from "./util";
-import { getCompanyLicense, getCompanyLicensePDA, getCompanyRewardsBucket, getCompanyRewardsBucketPDA, getUserPDA, getUserRewardsBucketPDA } from "./pda";
+import { getCompanyLicense, getCompanyLicensePDA, getCompanyRewardsBucket, getCompanyRewardsBucketPDA, getGratieWalletPDA, getTierPDA, getUserPDA, getUserRewardsBucketPDA } from "./pda";
 import { createTier } from "./tier";
-
+import { faker } from '@faker-js/faker';
+import { sha256 } from "@project-serum/anchor/dist/cjs/utils";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 // THIS needs to be unique!
-const COMPANY_NAME = "test_company_5";
+const COMPANY_NAME = faker.company.name();
 // userID could be a sha of the user email to help identify them
-const USER_ID = "b02b64a0-f570-40aF";
+const USER_EMAIL = faker.internet.email();
+const email_sha = sha256.hash(USER_EMAIL);
+const USER_ID = email_sha.substring(0, 16);
 
 describe("gratie-solana", () => {
 
@@ -21,14 +25,45 @@ describe("gratie-solana", () => {
   const program = anchor.workspace.GratieSolana as Program<GratieSolana>
   const wallet = anchor.AnchorProvider.env().wallet as Wallet;
 
+  it("create-gratie-wallet", async () => {
+    try {
+      await createGratieWallet(program, wallet);
+    } catch (e) {
+      // this means it has already been created
+      if (e.message.includes("custom program error: 0x0")) {
+        return;
+      }
+    }
+  });
+
+  it('log-gratie-wallet', async () => {
+    const gratieWalletPDA = getGratieWalletPDA(program);
+    const gratieWallet = await program.account.gratieWallet.fetch(gratieWalletPDA);
+
+    console.log("GratieWalletPDA: ", gratieWalletPDA.toBase58());
+    console.log("GratieWallet: ", gratieWallet);
+  });
+
 
   it("create-tier", async () => {
-    await createTier(program, wallet.publicKey);
+    try {
+      await createTier(program, wallet.publicKey);
+    } catch (e) {
+      // this means it has already been created
+      if (e.message.includes("custom program error: 0x0")) {
+        return;
+      }
+    }
   });
 
   it('create-company-license', async () => {
     await createCompanyLicense(program, wallet);
   });
+
+  it('withdraw-from-gratie-wallet', async () => {
+    await withdrawFromGratieWallet(program, wallet, 1 * LAMPORTS_PER_SOL);
+  });
+
 
   it('verify-company-license', async () => {
     await verifyCompanyLicense(program, wallet);
@@ -59,6 +94,25 @@ describe("gratie-solana", () => {
   //   await testMintCompanyLicenseMetaplex(program, wallet);
   // });
 });
+
+
+const withdrawFromGratieWallet = async (program: Program<GratieSolana>, wallet: Wallet, amount: number) => {
+  const gratieWalletPDA = getGratieWalletPDA(program);
+
+  await program.methods.withdrawFromGratieWallet(new anchor.BN(amount)).accounts({
+    withdrawer: wallet.publicKey,
+    gratieWallet: gratieWalletPDA,
+  }).rpc();
+};
+
+
+const createGratieWallet = async (program: Program<GratieSolana>, wallet: Wallet) => {
+  const gratieWalletPDA = getGratieWalletPDA(program);
+  await program.methods.createGratieWallet().accounts({
+    owner: wallet.publicKey,
+    gratieWallet: gratieWalletPDA,
+  }).rpc();
+};
 
 const transferTokensToUser = async (program: Program<GratieSolana>, wallet: Wallet, amount: anchor.BN) => {
   const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
@@ -97,10 +151,10 @@ const createUser = async (program: Program<GratieSolana>, wallet: Wallet) => {
   //TODO:  probably have to add this keypair to chain before or something
   const user = anchor.web3.Keypair.generate();
 
-  const companyLicense = getCompanyLicensePDA(program, COMPANY_NAME);
-  const userPDA = getUserPDA(program, companyLicense, USER_ID);
+  const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
+  const companyLicense = await program.account.companyLicense.fetch(companyLicensePDA);
+  const userPDA = getUserPDA(program, companyLicensePDA, USER_ID);
 
-  const testUserEmail = "test-user@mucks.dev";
 
   // TODO: encrypt this with the companys public key and the user email and the users hashed password
   // companies have this user data usually on their database
@@ -113,7 +167,8 @@ const createUser = async (program: Program<GratieSolana>, wallet: Wallet) => {
 
   await program.methods.createUser(COMPANY_NAME, USER_ID, encryptedPrivateKey).accounts({
     mintAuthority: wallet.publicKey,
-    companyLicense: companyLicense,
+    companyLicense: companyLicensePDA,
+    tier: companyLicense.tier,
     userAccount: user.publicKey,
     user: userPDA,
   }).rpc();
@@ -180,138 +235,34 @@ const createCompanyLicense = async (program: Program<GratieSolana>, wallet: Wall
   const testEmail = "mail@mucks.dev";
   const testLogoUri = "https://v2.akord.com/public/vaults/active/G8DOVyi_zmdssZVa6NFY5K1gKIKVW9q7gyXGhVltbsI/gallery#public/74959dec-5113-4b8b-89a0-a1e56ce8d89e";
   const testEvaluation = new anchor.BN(100000);
-  const tier = 0;
+  const tierID = 0;
+  const tierPDA = getTierPDA(program, tierID);
+  const tier = await program.account.tier.fetch(tierPDA);
+
 
   const { mintKey, tokenAccount } = await createMintKeyAndTokenAccount(program, wallet.publicKey);
 
+  const gratieWalletBefore = await program.account.gratieWallet.fetch(getGratieWalletPDA(program));
+  const oldAmountEarned = gratieWalletBefore.amountEarned.toNumber();
 
-  await program.methods.createCompanyLicense(COMPANY_NAME, testEmail, testLogoUri, testEvaluation, tier).accounts({
+
+  await program.methods.createCompanyLicense(COMPANY_NAME, testEmail, testLogoUri, testEvaluation, tierID).accounts({
     mintAuthority: wallet.publicKey,
     companyLicense: companyLicensePDA,
+    gratieWallet: getGratieWalletPDA(program),
     mint: mintKey.publicKey,
     tokenAccount: tokenAccount,
     tokenProgram: TOKEN_PROGRAM_ID,
+    tier: tierPDA,
   }).rpc();
 
   const companyLicense = await getCompanyLicense(program, COMPANY_NAME);
-
-  console.log(companyLicense);
-
   expect(companyLicense.name).to.equal(COMPANY_NAME);
+
+  // check if the amountEarned increased by the price of the tier
+  const gratieWallet = await program.account.gratieWallet.fetch(getGratieWalletPDA(program));
+  const amountEarnedDiff = gratieWallet.amountEarned.toNumber() - oldAmountEarned;
+  expect(amountEarnedDiff).to.equal(tier.priceLamports.toNumber());
 }
 
-
-// Note: this works on devnet but not on localnet
-const testMintCompanyLicenseMetaplex = async (program: Program<GratieSolana>, wallet: Wallet) => {
-  const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey(
-    "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-  );
-
-  const lamports: number =
-    await program.provider.connection.getMinimumBalanceForRentExemption(
-      MINT_SIZE
-    );
-
-  const getMetadata = async (
-    mint: anchor.web3.PublicKey
-  ): Promise<anchor.web3.PublicKey> => {
-    return (
-      await anchor.web3.PublicKey.findProgramAddress(
-        [
-          Buffer.from("metadata"),
-          TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-          mint.toBuffer(),
-        ],
-        TOKEN_METADATA_PROGRAM_ID
-      )
-    )[0];
-  };
-
-  const getMasterEdition = async (
-    mint: anchor.web3.PublicKey
-  ): Promise<anchor.web3.PublicKey> => {
-    return (
-      await anchor.web3.PublicKey.findProgramAddress(
-        [
-          Buffer.from("metadata"),
-          TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-          mint.toBuffer(),
-          Buffer.from("edition"),
-        ],
-        TOKEN_METADATA_PROGRAM_ID
-      )
-    )[0];
-  };
-
-  const mintKey: anchor.web3.Keypair = anchor.web3.Keypair.generate();
-  const NftTokenAccount = await getAssociatedTokenAddress(
-    mintKey.publicKey,
-    wallet.publicKey
-  );
-  console.log("NFT Account: ", NftTokenAccount.toBase58());
-
-
-  const mint_tx = new anchor.web3.Transaction().add(
-    anchor.web3.SystemProgram.createAccount({
-      fromPubkey: wallet.publicKey,
-      newAccountPubkey: mintKey.publicKey,
-      space: MINT_SIZE,
-      programId: TOKEN_PROGRAM_ID,
-      lamports,
-    }),
-    createInitializeMintInstruction(
-      mintKey.publicKey,
-      0,
-      wallet.publicKey,
-      wallet.publicKey
-    ),
-    createAssociatedTokenAccountInstruction(
-      wallet.publicKey,
-      NftTokenAccount,
-      wallet.publicKey,
-      mintKey.publicKey
-    )
-  );
-
-  const res = await program.provider.sendAndConfirm(mint_tx, [mintKey]);
-  console.log(
-    await program.provider.connection.getParsedAccountInfo(mintKey.publicKey)
-  );
-
-  console.log("Account: ", res);
-  console.log("Mint key: ", mintKey.publicKey.toString());
-  console.log("User: ", wallet.publicKey.toString());
-
-  const metadataAddress = await getMetadata(mintKey.publicKey);
-  const masterEdition = await getMasterEdition(mintKey.publicKey);
-
-  console.log("Metadata address: ", metadataAddress.toBase58());
-  console.log("MasterEdition: ", masterEdition.toBase58());
-
-  // Transaction error 0xb can happen if uri and name are swapped
-  const tx = await program.methods.mintCompanyLicenseMetaplex(
-    // creator
-    mintKey.publicKey,
-    // uri
-    "https://minio.mucks.dev/public/company-license-sample.json",
-    // name
-    "Gratie Sample",
-  )
-    .accounts({
-      mintAuthority: wallet.publicKey,
-      mint: mintKey.publicKey,
-      tokenAccount: NftTokenAccount,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      metadata: metadataAddress,
-      tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-      payer: wallet.publicKey,
-      systemProgram: anchor.web3.SystemProgram.programId,
-      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      masterEdition: masterEdition,
-    },
-    )
-    .rpc();
-
-  console.log("Your transaction signature", tx);
-};
 

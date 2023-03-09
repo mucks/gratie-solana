@@ -1,6 +1,10 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::program::invoke;
+use anchor_lang::solana_program::system_instruction;
 use crate::state::company_license::CompanyLicense;
 use crate::error::MyError;
+use crate::state::gratie_wallet::GratieWallet;
+use crate::state::tier::Tier;
 use anchor_spl::token;
 
 // This creates a unique company license for each wallet address.
@@ -23,13 +27,31 @@ pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: 
         return Err(MyError::UriTooLong.into());
     }
 
+    // Company pays the fee for creation
+
+    let transfer = system_instruction::transfer(
+        &ctx.accounts.mint_authority.key(),
+        // The lamports are sent to the gratie_wallet that lives on the program
+        &ctx.accounts.gratie_wallet.key(), 
+        ctx.accounts.tier.price_lamports
+    );
+
+    invoke(&transfer, &[
+        ctx.accounts.mint_authority.to_account_info(),
+        ctx.accounts.gratie_wallet.to_account_info(),
+    ])?;
+
+    ctx.accounts.gratie_wallet.amount_earned += ctx.accounts.tier.price_lamports as u128;
+
+    // Company license is created
+
     let company_license = &mut ctx.accounts.company_license;
 
     company_license.name = name;
     company_license.email = email;
     company_license.logo_uri = logo_uri;
     company_license.evaluation = evaluation;
-    company_license.tier_id = tier_id;
+    company_license.tier = ctx.accounts.tier.key();
     company_license.owner = ctx.accounts.mint_authority.key();
 
     // Create the token
@@ -76,6 +98,10 @@ pub struct CreateCompanyLicense<'info> {
         bump
     )]
     pub company_license: Account<'info, CompanyLicense>,
+
+    #[account(mut, seeds = [b"gratie_wallet".as_ref()], bump = gratie_wallet.bump)]
+    pub gratie_wallet: Account<'info, GratieWallet>,
+
     pub system_program: Program<'info, System>,
     /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
@@ -86,6 +112,10 @@ pub struct CreateCompanyLicense<'info> {
     
     // The token program is the program that will be used to mint the token.
     pub token_program: Program<'info, token::Token>,
+
+
+    #[account(mut, seeds = [b"tier".as_ref(), &[tier_id]], bump)]
+    pub tier: Account<'info, Tier>,
 
 }
 

@@ -1,15 +1,11 @@
 use anchor_lang::prelude::*;
-use crate::{state::{user_rewards_bucket::UserRewardsBucket, company_license::{CompanyLicense}, user::{User}, company_rewards_bucket::CompanyRewardsBucket}, error::MyError};
+use crate::{state::{user_rewards_bucket::UserRewardsBucket, company_license::{CompanyLicense}, user::{User}, company_rewards_bucket::CompanyRewardsBucket, tier::Tier}, error::MyError};
 
+// a user can currently only have one bucket maximum
 
 // ERC-1155
 pub fn create_user_rewards_bucket_handler(ctx: Context<CreateUserRewardsBucket>) -> Result<()> {
     let user_rewards_bucket = &mut ctx.accounts.user_rewards_bucket;
-
-
-    // if ctx.accounts.company_license.rewards_token_account.is_none() {
-    //     return Err(MyError::CompanyLicenseHasNotMintedRewards.into());
-    // }
 
     user_rewards_bucket.user = ctx.accounts.user.key();
     user_rewards_bucket.creator = ctx.accounts.mint_authority.key();
@@ -17,6 +13,7 @@ pub fn create_user_rewards_bucket_handler(ctx: Context<CreateUserRewardsBucket>)
     user_rewards_bucket.created_at = Clock::get()?.unix_timestamp;
 
     ctx.accounts.company_rewards_bucket.user_rewards_bucket_count += 1;
+
     user_rewards_bucket.bump = *ctx.bumps.get("user_rewards_bucket").ok_or(MyError::BumpNotFound)?;
 
     Ok(())

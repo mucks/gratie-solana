@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use crate::{state::{user::User, company_license::CompanyLicense}, error::MyError};
+use crate::{state::{user::User, company_license::CompanyLicense, tier::Tier}, error::MyError};
 
 pub fn create_user_handler(ctx: Context<CreateUser>, user_id: String, encrypted_private_key: String) -> Result<()> {
     let user = &mut ctx.accounts.user;
@@ -7,6 +7,18 @@ pub fn create_user_handler(ctx: Context<CreateUser>, user_id: String, encrypted_
     if !ctx.accounts.company_license.verified {
         return Err(MyError::CompanyLicenseNotVerified.into());
     }
+
+    // Calculate user limit 
+    let free_user_limit = ctx.accounts.tier.free_user_limit as u64;
+    let user_limit = free_user_limit + ctx.accounts.company_license.paid_user_limit;
+
+    // Check if user limit is reached
+    if ctx.accounts.company_license.user_count >= user_limit {
+        return Err(MyError::MaxUsersReached.into());
+    }
+
+    // Increment user count
+    ctx.accounts.company_license.user_count += 1;
 
     user.owner = ctx.accounts.user_account.key();
     user.company = ctx.accounts.mint_authority.key();
@@ -29,6 +41,9 @@ pub struct CreateUser<'info> {
     
     #[account(mut, seeds = [b"company_license".as_ref(), company_name.as_ref()], bump = company_license.bump)]
     pub company_license: Account<'info, CompanyLicense>,
+
+    #[account(address = company_license.tier)]
+    pub tier: Account<'info, Tier>,
 
 
     /// CHECK: This is not dangerous because we don't read or write from this account

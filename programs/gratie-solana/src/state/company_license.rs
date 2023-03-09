@@ -8,8 +8,7 @@ pub struct CompanyLicense {
     // owner of the company_license nft
     pub owner: Pubkey,
 
-    // the tier of the company (small, midsized, large, etc)
-    pub tier_id: u8,
+    pub tier: Pubkey,
 
     pub name: String,
     pub email: String,
@@ -26,6 +25,11 @@ pub struct CompanyLicense {
 
     // the token account of the company license
     pub token_account: Option<Pubkey>,
+
+    pub user_count: u64,
+
+    // The company can buy additional user slots
+    pub paid_user_limit: u64,
 
     // TODO: figure out what the bump does exactly
     pub bump: u8,

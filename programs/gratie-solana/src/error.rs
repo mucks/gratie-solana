@@ -20,6 +20,10 @@ pub enum MyError {
     NotAdmin,
     #[msg("Bump was not found on object in context")]
     BumpNotFound,
+    #[msg("max users reached")]
+    MaxUsersReached,
+    #[msg("Account has insufficient funds")]
+    InsufficientFunds,
     #[msg("Invalid Token Account")]
     InvalidTokenAccount,
     #[msg("Invalid TierType")]

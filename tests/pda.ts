@@ -31,6 +31,10 @@ const getPDA = (program: Program<GratieSolana>, id: string, keys: (anchor.web3.P
   return pda;
 }
 
+export const getGratieWalletPDA = (program: Program<GratieSolana>) => {
+  return getPDA(program, 'gratie_wallet', []);
+};
+
 export const getTierPDA = (program: Program<GratieSolana>, tierID: number) => {
   return getPDA(program, 'tier', [tierID]);
 }

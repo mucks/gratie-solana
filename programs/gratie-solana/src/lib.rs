@@ -20,6 +20,17 @@ declare_id!("AEf99S19YTaox9E8aX3ugpGJtHTHjaQtSY2ixtLysFGr");
 pub mod gratie_solana {
     use super::*;
 
+    pub fn withdraw_from_gratie_wallet(
+        ctx: Context<WithdrawFromGratieWallet>,
+        amount_lamports: u64,
+    ) -> Result<()> {
+        withdraw_from_gratie_wallet_handler(ctx, amount_lamports)
+    }
+
+    pub fn create_gratie_wallet(ctx: Context<CreateGratieWallet>) -> Result<()> {
+        create_gratie_wallet_handler(ctx)
+    }
+
     // ERC-721
     pub fn create_company_license(
         ctx: Context<CreateCompanyLicense>,

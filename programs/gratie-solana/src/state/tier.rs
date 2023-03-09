@@ -15,6 +15,9 @@ pub struct Tier {
     pub additional_user_price_lamports: u64,
     // 1/1000 can be changed to allow more precision
     pub platform_fee_permille: u16,
+
+    pub company_license_count: u32,
+
     pub bump: u8,
 }
 impl Tier {

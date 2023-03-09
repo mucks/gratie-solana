@@ -1,6 +1,5 @@
 import * as anchor from "@project-serum/anchor";
-import { Program, Wallet, AnchorProvider, SystemProgram, BN } from "@project-serum/anchor";
-import { TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createInitializeMintInstruction, MINT_SIZE } from '@solana/spl-token'
+import { Program, BN } from "@project-serum/anchor";
 import { GratieSolana } from "../target/types/gratie_solana";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { getTierPDA } from "./pda";
