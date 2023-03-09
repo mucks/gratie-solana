@@ -37,12 +37,12 @@ pub fn transfer_company_rewards_to_user_rewards_bucket_handler(
 }
 
 #[derive(Accounts)]
-#[instruction(amount: u64)]
+#[instruction(company_name: String, user_id: String, amount: u64)]
 pub struct TransferCompanyRewardsToUserRewardsBucket<'info> {
     #[account(mut)]
     pub sender: Signer<'info>,
 
-    #[account(seeds = [b"company_license".as_ref(), sender.key().as_ref()], bump = company_license.bump)]
+    #[account(seeds = [b"company_license".as_ref(), company_name.as_ref()], bump = company_license.bump)]
     pub company_license: Account<'info, CompanyLicense>,
 
     #[account(mut, seeds = [b"company_rewards_bucket".as_ref(), company_license.key().as_ref()], bump = from.bump)]
@@ -59,7 +59,7 @@ pub struct TransferCompanyRewardsToUserRewardsBucket<'info> {
     #[account(mut)]
     pub to_token_account: UncheckedAccount<'info>,
 
-    #[account(seeds = [b"user".as_ref(), company_license.key().as_ref(), user_account.key().as_ref()], bump = user.bump)]
+    #[account(seeds = [b"user".as_ref(), company_license.key().as_ref(), user_id.as_ref()], bump = user.bump)]
     pub user: Account<'info, User>,
 
     /// CHECK: This is not dangerous because we don't read or write from this account

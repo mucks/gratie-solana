@@ -19,14 +19,15 @@ pub fn create_user_handler(ctx: Context<CreateUser>, user_id: String, encrypted_
 
 #[derive(Accounts)]
 #[instruction(
+    company_name: String,
     user_id: String,
     encrypted_private_key: String
 )]
 pub struct CreateUser<'info> {
-    #[account(mut)]
+    #[account(mut, address = company_license.owner)]
     pub mint_authority: Signer<'info>,
     
-    #[account(mut, seeds = [b"company_license".as_ref(), mint_authority.key().as_ref()], bump = company_license.bump)]
+    #[account(mut, seeds = [b"company_license".as_ref(), company_name.as_ref()], bump = company_license.bump)]
     pub company_license: Account<'info, CompanyLicense>,
 
 
@@ -38,7 +39,7 @@ pub struct CreateUser<'info> {
         init, 
         payer = mint_authority,
         space = User::LEN,
-        seeds = [b"user".as_ref(), company_license.key().as_ref(), user_account.key().as_ref()], 
+        seeds = [b"user".as_ref(), company_license.key().as_ref(), user_id.as_bytes()], 
         bump
     )]
     pub user: Account<'info, User>,

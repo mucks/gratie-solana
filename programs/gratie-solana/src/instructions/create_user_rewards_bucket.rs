@@ -24,14 +24,19 @@ pub fn create_user_rewards_bucket_handler(ctx: Context<CreateUserRewardsBucket>)
 // Create user reward buckets from a common merkle root
 
 #[derive(Accounts)]
+#[instruction(company_name: String)]
 pub struct CreateUserRewardsBucket<'info> {
-    #[account(mut)]
+    #[account(mut, address = company_license.owner)]
     pub mint_authority: Signer<'info>,
     
     #[account(mut)]
     pub user: Account<'info, User>,
 
-    #[account(mut, seeds = [b"company_license".as_ref(), mint_authority.key().as_ref()], bump = company_license.bump)]
+    #[account(
+        mut, 
+        seeds = [b"company_license".as_ref(), company_name.as_ref()],
+        bump = company_license.bump
+    )]
     pub company_license: Account<'info, CompanyLicense>,
 
 

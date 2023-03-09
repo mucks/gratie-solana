@@ -6,7 +6,8 @@ use anchor_lang::prelude::*;
 #[derive(Default)]
 pub struct CompanyLicense {
     // the tier of the company (small, midsized, large, etc)
-    pub tier: u8,
+    // TierType is an enum that has the different tiers
+    pub tier_type: u8,
 
     // owner of the company_license nft
     pub owner: Pubkey,

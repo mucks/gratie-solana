@@ -27,23 +27,31 @@ pub mod gratie_solana {
         email: String,
         logo_uri: String,
         evaluation: u64,
-        tier: u8,
+        tier_type: u8,
     ) -> Result<()> {
-        create_company_license_handler(ctx, name, email, logo_uri, evaluation, tier)
+        create_company_license_handler(ctx, name, email, logo_uri, evaluation, tier_type)
     }
 
     // ERC-1155
-    pub fn create_user_rewards_bucket(ctx: Context<CreateUserRewardsBucket>) -> Result<()> {
+    pub fn create_user_rewards_bucket(
+        ctx: Context<CreateUserRewardsBucket>,
+        company_name: String,
+    ) -> Result<()> {
         create_user_rewards_bucket_handler(ctx)
     }
 
     // ERC-20
-    pub fn create_company_rewards_bucket(ctx: Context<CreateCompanyRewardsBucket>) -> Result<()> {
+    pub fn create_company_rewards_bucket(
+        ctx: Context<CreateCompanyRewardsBucket>,
+        company_name: String,
+    ) -> Result<()> {
         create_company_rewards_bucket_handler(ctx)
     }
 
     pub fn transfer_company_rewards_to_user_rewards_bucket(
         ctx: Context<TransferCompanyRewardsToUserRewardsBucket>,
+        company_name: String,
+        user_id: String,
         amount: u64,
     ) -> Result<()> {
         transfer_company_rewards_to_user_rewards_bucket_handler(ctx, amount)
@@ -51,6 +59,7 @@ pub mod gratie_solana {
 
     pub fn create_user(
         ctx: Context<CreateUser>,
+        company_name: String,
         user_id: String,
         encrypted_private_key: String,
     ) -> Result<()> {

@@ -3,23 +3,29 @@ import { Program, Wallet } from "@project-serum/anchor";
 import { GratieSolana } from "../target/types/gratie_solana";
 
 
-const getPDA = (program: Program<GratieSolana>, id: string, keys: anchor.web3.PublicKey[]) => {
+const getPDA = (program: Program<GratieSolana>, id: string, keys: (anchor.web3.PublicKey | string)[]) => {
   const [pda, _] = anchor.web3.PublicKey.findProgramAddressSync(
     [
       anchor.utils.bytes.utf8.encode(id),
-      ...keys.map((key) => key.toBuffer()),
+      ...keys.map((key) => {
+        if (typeof key === 'string') {
+          return anchor.utils.bytes.utf8.encode(key);
+        } else {
+          return key.toBuffer()
+        }
+      }),
     ],
     program.programId
   );
   return pda;
 }
 
-export const getUserPDA = (program: Program<GratieSolana>, companyLicensePublicKey: anchor.web3.PublicKey, userAccountPublicKey: anchor.web3.PublicKey) => {
-  return getPDA(program, 'user', [companyLicensePublicKey, userAccountPublicKey]);
+export const getUserPDA = (program: Program<GratieSolana>, companyLicensePublicKey: anchor.web3.PublicKey, user_id: string) => {
+  return getPDA(program, 'user', [companyLicensePublicKey, user_id]);
 }
 
-export const getCompanyLicensePDA = (program: Program<GratieSolana>, wallet: Wallet) => {
-  return getPDA(program, 'company_license', [wallet.publicKey]);
+export const getCompanyLicensePDA = (program: Program<GratieSolana>, company_name: string) => {
+  return getPDA(program, 'company_license', [company_name]);
 }
 
 export const getCompanyRewardsBucketPDA = (program: Program<GratieSolana>, companyLicensePDA: anchor.web3.PublicKey) => {
@@ -35,8 +41,8 @@ export const getCompanyRewardsBucket = async (program: Program<GratieSolana>, co
   return await program.account.companyRewardsBucket.fetch(companyRewardsBucketPDA);
 }
 
-export const getCompanyLicense = async (program: Program<GratieSolana>, wallet: Wallet) => {
-  const companyLicensePDA = getCompanyLicensePDA(program, wallet);
+export const getCompanyLicense = async (program: Program<GratieSolana>, company_name: string) => {
+  const companyLicensePDA = getCompanyLicensePDA(program, company_name);
   return await program.account.companyLicense.fetch(companyLicensePDA);
 }
 

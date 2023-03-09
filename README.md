@@ -5,6 +5,7 @@
 
 * [x] Create reward tokens with erc-20 tokens based on the evaluation of the company
 * [x] Create a rewards bucket (account) for every user of the company
+* [x] Send company rewards to user bucket
 * [ ] Add metadata to these reward tokens
 * [ ] Unsafe: Create a link that allows the user to withdraw from the bucket to his account, this link will be sent to the user via email, maybe do some verification using merkle trees?
 

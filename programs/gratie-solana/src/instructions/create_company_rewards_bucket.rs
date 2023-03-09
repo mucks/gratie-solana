@@ -41,11 +41,12 @@ pub fn create_company_rewards_bucket_handler(
 }
 
 #[derive(Accounts)]
+#[instruction(company_name: String)]
 pub struct CreateCompanyRewardsBucket<'info> {
-    #[account(mut)]
+    #[account(mut, address = company_license.owner)]
     pub mint_authority: Signer<'info>,
 
-    #[account(mut, seeds = [b"company_license".as_ref(), mint_authority.key().as_ref()], bump = company_license.bump)]
+    #[account(mut, seeds = [b"company_license".as_ref(), company_name.as_ref()], bump = company_license.bump)]
     pub company_license: Account<'info, CompanyLicense>,
 
     #[account(

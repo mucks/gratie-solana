@@ -22,4 +22,6 @@ pub enum MyError {
     BumpNotFound,
     #[msg("Invalid Token Account")]
     InvalidTokenAccount,
+    #[msg("Invalid TierType")]
+    InvalidTierType,
 }
