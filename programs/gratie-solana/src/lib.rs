@@ -73,8 +73,16 @@ pub mod gratie_solana {
         company_name: String,
         user_id: String,
         encrypted_private_key: String,
+        user_password_encryption_algorithm: u8,
+        user_password_salt: String,
     ) -> Result<()> {
-        create_user_handler(ctx, user_id, encrypted_private_key)
+        create_user_handler(
+            ctx,
+            user_id,
+            encrypted_private_key,
+            user_password_encryption_algorithm,
+            user_password_salt,
+        )
     }
 
     pub fn verify_company_license(ctx: Context<VerifyCompanyLicense>) -> Result<()> {

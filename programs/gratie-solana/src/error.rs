@@ -24,6 +24,8 @@ pub enum MyError {
     MaxUsersReached,
     #[msg("Account has insufficient funds")]
     InsufficientFunds,
+    #[msg("Encrypted Private Key is too long")]
+    EncryptedPrivateKeyTooLong,
     #[msg("Invalid Token Account")]
     InvalidTokenAccount,
     #[msg("Invalid TierType")]

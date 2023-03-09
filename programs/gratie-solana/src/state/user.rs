@@ -21,6 +21,16 @@ pub struct User {
     // WARN: this is probably very unsafe!
     pub encrypted_private_key: Option<String>,
 
+    // algorithm the company uses to encrypt their users passwords
+    // this is used to decrypt the encrypted_private_key
+    // the company should be able to change this
+    // this is only needed the first time the user logs into gratie
+    // cause after that the user can decrypt the private key with his email and password (plaintext)
+    // these can be set to None after the user has logged in the first time
+    // maybe put those in a burnable account?
+    pub user_password_encryption_algorithm: Option<u8>,
+    pub user_password_salt: Option<String>,
+
     pub bump: u8,
 }
 

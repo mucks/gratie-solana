@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use crate::{state::{user::User, company_license::CompanyLicense, tier::Tier}, error::MyError};
 
-pub fn create_user_handler(ctx: Context<CreateUser>, user_id: String, encrypted_private_key: String) -> Result<()> {
+pub fn create_user_handler(ctx: Context<CreateUser>, user_id: String, encrypted_private_key: String, user_password_encryption_algorithm: u8, user_password_salt: String) -> Result<()> {
     let user = &mut ctx.accounts.user;
     
     if !ctx.accounts.company_license.verified {
@@ -17,6 +17,10 @@ pub fn create_user_handler(ctx: Context<CreateUser>, user_id: String, encrypted_
         return Err(MyError::MaxUsersReached.into());
     }
 
+    if encrypted_private_key.len() > 300 {
+        return Err(MyError::EncryptedPrivateKeyTooLong.into());
+    }
+
     // Increment user count
     ctx.accounts.company_license.user_count += 1;
 
@@ -24,6 +28,8 @@ pub fn create_user_handler(ctx: Context<CreateUser>, user_id: String, encrypted_
     user.company = ctx.accounts.mint_authority.key();
     user.user_id = user_id;
     user.encrypted_private_key = Some(encrypted_private_key);
+    user.user_password_encryption_algorithm = Some(user_password_encryption_algorithm);
+    user.user_password_salt = Some(user_password_salt);
     user.bump = *ctx.bumps.get("user").ok_or(MyError::BumpNotFound)?;
 
     Ok(())
@@ -33,7 +39,9 @@ pub fn create_user_handler(ctx: Context<CreateUser>, user_id: String, encrypted_
 #[instruction(
     company_name: String,
     user_id: String,
-    encrypted_private_key: String
+    encrypted_private_key: String,
+    user_password_encryption_algorithm: u8,
+    user_password_encryption_salt: String
 )]
 pub struct CreateUser<'info> {
     #[account(mut, address = company_license.owner)]
