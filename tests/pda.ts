@@ -35,6 +35,11 @@ export const getGratieWalletPDA = (program: Program<GratieSolana>) => {
   return getPDA(program, 'gratie_wallet', []);
 };
 
+export const getUserRewardsBucketTokenAccountPDA = (program: Program<GratieSolana>, userRewardsBucketPDA: anchor.web3.PublicKey) => {
+  // user_rewards_bucket_token_account
+  return getPDA(program, 'urb_ta', [userRewardsBucketPDA]);
+};
+
 export const getTierPDA = (program: Program<GratieSolana>, tierID: number) => {
   return getPDA(program, 'tier', [tierID]);
 }

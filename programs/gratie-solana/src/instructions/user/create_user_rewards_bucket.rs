@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token::{self, Mint};
 use crate::{state::{user_rewards_bucket::UserRewardsBucket, company_license::{CompanyLicense}, user::{User}, company_rewards_bucket::CompanyRewardsBucket, tier::Tier}, error::MyError};
 
 // a user can currently only have one bucket maximum
@@ -9,7 +10,7 @@ pub fn create_user_rewards_bucket_handler(ctx: Context<CreateUserRewardsBucket>)
 
     user_rewards_bucket.user = ctx.accounts.user.key();
     user_rewards_bucket.creator = ctx.accounts.mint_authority.key();
-    user_rewards_bucket.token_account = ctx.accounts.token_account.key();
+    user_rewards_bucket.token_account = None;
     user_rewards_bucket.created_at = Clock::get()?.unix_timestamp;
 
     ctx.accounts.company_rewards_bucket.user_rewards_bucket_count += 1;
@@ -21,12 +22,15 @@ pub fn create_user_rewards_bucket_handler(ctx: Context<CreateUserRewardsBucket>)
 // Create user reward buckets from a common merkle root
 
 #[derive(Accounts)]
-#[instruction(company_name: String)]
+#[instruction(company_name: String, user_id: String)]
 pub struct CreateUserRewardsBucket<'info> {
     #[account(mut, address = company_license.owner)]
     pub mint_authority: Signer<'info>,
     
-    #[account(mut)]
+    #[account(mut, 
+        seeds = [b"user".as_ref(), company_license.key().as_ref(), user_id.as_bytes()],
+        bump = user.bump
+    )]
     pub user: Account<'info, User>,
 
     #[account(
@@ -55,8 +59,4 @@ pub struct CreateUserRewardsBucket<'info> {
     )]
     pub user_rewards_bucket: Account<'info, UserRewardsBucket>,
     pub system_program: Program<'info, System>,
-    
-    /// CHECK: This is not dangerous because we don't read or write from this account
-    #[account(mut)]
-    pub token_account: UncheckedAccount<'info>,
 }

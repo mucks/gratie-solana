@@ -10,7 +10,7 @@ pub struct UserRewardsBucket {
     pub user: Pubkey,
 
     // where the rewards are stored
-    pub token_account: Pubkey,
+    pub token_account: Option<Pubkey>,
     // timestamp when the bucket was created
     // should be created when the user signs up
     // Note: we can add a lot of timebased rewards with this

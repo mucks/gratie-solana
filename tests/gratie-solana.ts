@@ -9,7 +9,7 @@ import { createTier } from "./tier";
 import { faker } from '@faker-js/faker';
 import { sha256 } from "@project-serum/anchor/dist/cjs/utils";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { createUser, createUserRewardsBucket, userGetPrivateKey } from "./user";
+import { createUser, createUserRewardsBucket, createUserRewardsBucketTokenAccount, userGetPrivateKey } from "./user";
 
 
 // THIS needs to be unique!
@@ -88,6 +88,10 @@ describe("gratie-solana", () => {
 
   it('create-user-rewards-bucket', async () => {
     await createUserRewardsBucket(program, wallet);
+  });
+
+  it('create-user-rewards-bucket-token-account', async () => {
+    await createUserRewardsBucketTokenAccount(program, wallet);
   });
 
   it('transfer-tokens-to-user', async () => {

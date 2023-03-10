@@ -25,6 +25,7 @@ export const createTokenAccountForMint = async (program: Program<GratieSolana>, 
 
 };
 
+
 export const createMintKeyAndTokenAccount = async (program: Program<GratieSolana>, walletPublicKey: anchor.web3.PublicKey) => {
   const mintKey: anchor.web3.Keypair = anchor.web3.Keypair.generate();
 

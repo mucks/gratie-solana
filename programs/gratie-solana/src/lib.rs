@@ -47,8 +47,17 @@ pub mod gratie_solana {
     pub fn create_user_rewards_bucket(
         ctx: Context<CreateUserRewardsBucket>,
         company_name: String,
+        user_id: String,
     ) -> Result<()> {
         create_user_rewards_bucket_handler(ctx)
+    }
+
+    pub fn create_user_rewards_bucket_token_account(
+        ctx: Context<CreateUserRewardsBucketTokenAccount>,
+        company_name: String,
+        user_id: String,
+    ) -> Result<()> {
+        create_user_rewards_bucket_token_account_handler(ctx)
     }
 
     // ERC-20

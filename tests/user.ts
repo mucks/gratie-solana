@@ -3,13 +3,14 @@ import { Program, Wallet } from "@project-serum/anchor";
 import AES from "crypto-js/aes";
 import { enc } from "crypto-js";
 import { base64 } from "@project-serum/anchor/dist/cjs/utils/bytes";
-import { getCompanyLicense, getCompanyLicensePDA, getCompanyRewardsBucket, getCompanyRewardsBucketPDA, getGratieWalletPDA, getTierPDA, getUserPDA, getUserRewardsBucketPDA } from "./pda";
+import { getCompanyLicense, getCompanyLicensePDA, getCompanyRewardsBucket, getCompanyRewardsBucketPDA, getGratieWalletPDA, getTierPDA, getUserPDA, getUserRewardsBucketPDA, getUserRewardsBucketTokenAccountPDA } from "./pda";
 import { GratieSolana } from "../target/types/gratie_solana";
 import { COMPANY_NAME, ENCRYPTED_USER_PASSWORD, USER_EMAIL, USER_ID } from "./gratie-solana";
 import { sha256 } from "@project-serum/anchor/dist/cjs/utils";
 import { createTokenAccountForMint } from "./util";
 import { expect } from "chai";
 import * as argon2 from "argon2";
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 
 // To create a user the company needs to provide the encrypted user password the user email and the password encryption algorithm and the hash
@@ -99,23 +100,55 @@ export const createUserRewardsBucket = async (program: Program<GratieSolana>, wa
   const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
   const companyRewardsBucketPDA = getCompanyRewardsBucketPDA(program, companyLicensePDA);
   const companyRewardsBucket = await getCompanyRewardsBucket(program, companyLicensePDA);
-  const tokenMintPubkey = companyRewardsBucket.tokenMintKey;
 
   const userPDA = getUserPDA(program, companyLicensePDA, USER_ID);
-  const user = await program.account.user.fetch(userPDA);
   const userRewardsBucketPDA = getUserRewardsBucketPDA(program, userPDA);
 
-  const tokenAccount = await createTokenAccountForMint(program, wallet.publicKey, tokenMintPubkey, user.owner);
+  // const tokenAccount = await createTokenAccountForMint(program, wallet.publicKey, tokenMintPubkey, user.owner);
+
+  console.log("userRewardsBucketPDA: ", userRewardsBucketPDA.toBase58());
 
 
-  await program.methods.createUserRewardsBucket(COMPANY_NAME).accounts({
+  await program.methods.createUserRewardsBucket(COMPANY_NAME, USER_ID).accounts({
     mintAuthority: wallet.publicKey,
     user: userPDA,
     companyLicense: companyLicensePDA,
     companyRewardsBucket: companyRewardsBucketPDA,
     userRewardsBucket: userRewardsBucketPDA,
-    tokenAccount: tokenAccount,
   }).rpc();
 
-
 }
+
+
+export const createUserRewardsBucketTokenAccount = async (program: Program<GratieSolana>, wallet: Wallet) => {
+  const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
+  const companyRewardsBucketPDA = getCompanyRewardsBucketPDA(program, companyLicensePDA);
+  const userPDA = getUserPDA(program, companyLicensePDA, USER_ID);
+  const userRewardsBucketPDA = getUserRewardsBucketPDA(program, userPDA);
+  const tokenAccountPDA = getUserRewardsBucketTokenAccountPDA(program, userRewardsBucketPDA);
+
+  const companyRewardsBucket = await getCompanyRewardsBucket(program, companyLicensePDA);
+  const tokenMintPubkey = companyRewardsBucket.tokenMintKey;
+  const user = await program.account.user.fetch(userPDA);
+
+
+  const tokenAccountAddress = await getAssociatedTokenAddress(
+    tokenMintPubkey,
+    user.owner,
+  )
+
+  console.log("tokenAccountPDA: ", tokenAccountPDA.toBase58());
+
+  await program.methods.createUserRewardsBucketTokenAccount(COMPANY_NAME, USER_ID).accounts({
+    mintAuthority: wallet.publicKey,
+    companyLicense: companyLicensePDA,
+    companyRewardsBucket: companyRewardsBucketPDA,
+    mint: tokenMintPubkey,
+    userRewardsBucket: userRewardsBucketPDA,
+    user: userPDA,
+    userAccount: user.owner,
+    tokenAccount: tokenAccountAddress,
+    tokenProgram: TOKEN_PROGRAM_ID,
+  }).rpc();
+
+};
