@@ -100,11 +100,12 @@ export const createUserRewardsBucket = async (program: Program<GratieSolana>, wa
   const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
   const companyRewardsBucketPDA = getCompanyRewardsBucketPDA(program, companyLicensePDA);
   const companyRewardsBucket = await getCompanyRewardsBucket(program, companyLicensePDA);
-
   const userPDA = getUserPDA(program, companyLicensePDA, USER_ID);
   const userRewardsBucketPDA = getUserRewardsBucketPDA(program, userPDA);
+  const user = await program.account.user.fetch(userPDA);
+  const tokenMintPubkey = companyRewardsBucket.tokenMintKey;
 
-  // const tokenAccount = await createTokenAccountForMint(program, wallet.publicKey, tokenMintPubkey, user.owner);
+  const tokenAccount = await createTokenAccountForMint(program, wallet.publicKey, tokenMintPubkey, user.owner);
 
   console.log("userRewardsBucketPDA: ", userRewardsBucketPDA.toBase58());
 
@@ -115,40 +116,8 @@ export const createUserRewardsBucket = async (program: Program<GratieSolana>, wa
     companyLicense: companyLicensePDA,
     companyRewardsBucket: companyRewardsBucketPDA,
     userRewardsBucket: userRewardsBucketPDA,
+    tokenAccount: tokenAccount,
   }).rpc();
 
 }
 
-
-export const createUserRewardsBucketTokenAccount = async (program: Program<GratieSolana>, wallet: Wallet) => {
-  const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
-  const companyRewardsBucketPDA = getCompanyRewardsBucketPDA(program, companyLicensePDA);
-  const userPDA = getUserPDA(program, companyLicensePDA, USER_ID);
-  const userRewardsBucketPDA = getUserRewardsBucketPDA(program, userPDA);
-  const tokenAccountPDA = getUserRewardsBucketTokenAccountPDA(program, userRewardsBucketPDA);
-
-  const companyRewardsBucket = await getCompanyRewardsBucket(program, companyLicensePDA);
-  const tokenMintPubkey = companyRewardsBucket.tokenMintKey;
-  const user = await program.account.user.fetch(userPDA);
-
-
-  const tokenAccountAddress = await getAssociatedTokenAddress(
-    tokenMintPubkey,
-    user.owner,
-  )
-
-  console.log("tokenAccountPDA: ", tokenAccountPDA.toBase58());
-
-  await program.methods.createUserRewardsBucketTokenAccount(COMPANY_NAME, USER_ID).accounts({
-    mintAuthority: wallet.publicKey,
-    companyLicense: companyLicensePDA,
-    companyRewardsBucket: companyRewardsBucketPDA,
-    mint: tokenMintPubkey,
-    userRewardsBucket: userRewardsBucketPDA,
-    user: userPDA,
-    userAccount: user.owner,
-    tokenAccount: tokenAccountAddress,
-    tokenProgram: TOKEN_PROGRAM_ID,
-  }).rpc();
-
-};

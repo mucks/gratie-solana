@@ -15,7 +15,7 @@ pub fn transfer_company_rewards_to_user_rewards_bucket_handler(
 ) -> Result<()> {
     // Check if the input token accounts are the same as the ones in the state
     if &ctx.accounts.from.token_account != ctx.accounts.from_token_account.key
-        || ctx.accounts.to.token_account != Some(*ctx.accounts.to_token_account.key)
+        || &ctx.accounts.to.token_account != ctx.accounts.to_token_account.key
     {
         return Err(MyError::InvalidTokenAccount.into());
     }

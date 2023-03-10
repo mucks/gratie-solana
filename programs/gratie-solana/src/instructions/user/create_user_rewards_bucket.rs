@@ -10,7 +10,7 @@ pub fn create_user_rewards_bucket_handler(ctx: Context<CreateUserRewardsBucket>)
 
     user_rewards_bucket.user = ctx.accounts.user.key();
     user_rewards_bucket.creator = ctx.accounts.mint_authority.key();
-    user_rewards_bucket.token_account = None;
+    user_rewards_bucket.token_account = ctx.accounts.token_account.key();
     user_rewards_bucket.created_at = Clock::get()?.unix_timestamp;
 
     ctx.accounts.company_rewards_bucket.user_rewards_bucket_count += 1;
@@ -59,4 +59,8 @@ pub struct CreateUserRewardsBucket<'info> {
     )]
     pub user_rewards_bucket: Account<'info, UserRewardsBucket>,
     pub system_program: Program<'info, System>,
+
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    #[account(mut)]
+    pub token_account: UncheckedAccount<'info>,
 }

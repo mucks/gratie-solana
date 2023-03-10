@@ -52,14 +52,6 @@ pub mod gratie_solana {
         create_user_rewards_bucket_handler(ctx)
     }
 
-    pub fn create_user_rewards_bucket_token_account(
-        ctx: Context<CreateUserRewardsBucketTokenAccount>,
-        company_name: String,
-        user_id: String,
-    ) -> Result<()> {
-        create_user_rewards_bucket_token_account_handler(ctx)
-    }
-
     // ERC-20
     pub fn create_company_rewards_bucket(
         ctx: Context<CreateCompanyRewardsBucket>,
