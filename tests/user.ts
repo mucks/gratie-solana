@@ -7,11 +7,10 @@ import { getCompanyLicensePDA, getCompanyRewardsBucket, getCompanyRewardsBucketP
 import { GratieSolana } from "../target/types/gratie_solana";
 import { COMPANY_NAME, USER_PASSWORD_SALT, USER_PASSWORD, USER_EMAIL, USER_ID } from "./gratie-solana";
 import { sha256 } from "@project-serum/anchor/dist/cjs/utils";
-import { createTokenAccountForMint } from "./util";
+import { companyCreateInitialTokenAccountForUser, userCreateTokenAccount } from "./util";
 import { expect } from "chai";
 import * as argon2 from "argon2";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { PublicKey } from "@solana/web3.js";
 
 
 // To create a user the company needs to provide the encrypted user password the user email and the password encryption algorithm and the hash
@@ -121,7 +120,7 @@ export const createUserRewardsBucket = async (program: Program<GratieSolana>, wa
   const user = await program.account.user.fetch(userPDA);
   const tokenMintPubkey = companyRewardsBucket.tokenMintKey;
 
-  const tokenAccount = await createTokenAccountForMint(program, wallet.publicKey, tokenMintPubkey, user.owner);
+  const tokenAccount = await companyCreateInitialTokenAccountForUser(program, wallet.publicKey, tokenMintPubkey, user.owner);
 
   console.log("userRewardsBucketPDA: ", userRewardsBucketPDA.toBase58());
 
@@ -139,7 +138,7 @@ export const createUserRewardsBucket = async (program: Program<GratieSolana>, wa
 
 
 // claims the user to a new private key that is generated here
-export const claimUser = async (program: Program<GratieSolana>, wallet: Wallet, userPassword: string) => {
+export const claimUser = async (program: Program<GratieSolana>, userPassword: string) => {
   const newUserKeypair = anchor.web3.Keypair.generate();
 
   const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
@@ -162,10 +161,9 @@ export const claimUser = async (program: Program<GratieSolana>, wallet: Wallet, 
 
   const encryptedPrivateKey = AES.encrypt(privKey, encKey).toString();
 
-  //TODO: remove the need for company wallet here
-  const tokenAccount = await createTokenAccountForMint(program, wallet.publicKey, tokenMintPubkey, newUserKeypair.publicKey);
-  const acc = await program.provider.connection.getAccountInfo(tokenAccount);
-  console.log('tokenAccountInfo', acc);
+  const oldUser = await userGetPrivateKey(program, userPassword);
+
+  const tokenAccount = await userCreateTokenAccount(program, oldUser, tokenMintPubkey, newUserKeypair.publicKey);
 
   console.log("newUserKeypair.publicKey: ", newUserKeypair.publicKey.toBase58());
   console.log('newTokenAccount:', tokenAccount.toBase58());
@@ -174,14 +172,13 @@ export const claimUser = async (program: Program<GratieSolana>, wallet: Wallet, 
   // so that the tests can sign with diffrent accounts
 
 
-  const oldUser = await userGetPrivateKey(program, userPassword);
+  console.log('SENDING CLAIM USER TX');
 
-  await program.methods.claimUser(
-    newUserKeypair.publicKey, encryptedPrivateKey,
-  ).accounts({
+  await program.methods.claimUser(encryptedPrivateKey).accounts({
     claimer: user.owner,
     user: userPDA,
     userRewardsBucket: userRewardsBucketPDA,
+    userAccount: newUserKeypair.publicKey,
     oldTokenAccount: userRewardsBucket.tokenAccount,
     newTokenAccount: tokenAccount,
     tokenProgram: TOKEN_PROGRAM_ID,
@@ -189,7 +186,7 @@ export const claimUser = async (program: Program<GratieSolana>, wallet: Wallet, 
 
 };
 
-export const claimUserToHisOwnWallet = async (program: Program<GratieSolana>, wallet: Wallet, userWallet: anchor.web3.PublicKey, userPassword: string) => {
+export const claimUserToHisOwnWallet = async (program: Program<GratieSolana>, newUserPubKey: anchor.web3.PublicKey, userPassword: string) => {
 
   const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
   const companyRewardsBucket = await getCompanyRewardsBucket(program, companyLicensePDA);
@@ -209,22 +206,18 @@ export const claimUserToHisOwnWallet = async (program: Program<GratieSolana>, wa
   const userRewardsBucketPDA = getUserRewardsBucketPDA(program, userPDA);
   const userRewardsBucket = await program.account.userRewardsBucket.fetch(userRewardsBucketPDA);
 
-
-  //TODO: remove the need for company wallet here
-  const tokenAccount = await createTokenAccountForMint(program, wallet.publicKey, tokenMintPubkey, userWallet);
-  const acc = await program.provider.connection.getAccountInfo(tokenAccount);
-
-  //TODO: add the signer to anchor somehow
-  // so that the tests can sign with diffrent accounts
-
-
   const oldUser = await userGetPrivateKey(program, userPassword);
 
+  // create tokenaccount with fees from olduser account and associat token to new account
+  const tokenAccount = await userCreateTokenAccount(program, oldUser, tokenMintPubkey, newUserPubKey);
+
+
   await program.methods.claimUserToHisOwnWallet(
-    userWallet,
+    newUserPubKey,
   ).accounts({
     claimer: user.owner,
     user: userPDA,
+    userAccount: newUserPubKey,
     userRewardsBucket: userRewardsBucketPDA,
     oldTokenAccount: userRewardsBucket.tokenAccount,
     newTokenAccount: tokenAccount,

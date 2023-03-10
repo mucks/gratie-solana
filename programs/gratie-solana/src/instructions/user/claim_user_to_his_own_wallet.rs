@@ -1,8 +1,12 @@
 use crate::{
     error::MyError,
+    instructions::util::transfer_all_tokens,
     state::{user::User, user_rewards_bucket::UserRewardsBucket},
 };
-use anchor_lang::prelude::*;
+use anchor_lang::{
+    prelude::*,
+    solana_program::{program::invoke, system_instruction},
+};
 use anchor_spl::token;
 
 pub fn claim_user_to_his_own_wallet_handler(
@@ -39,6 +43,11 @@ pub fn claim_user_to_his_own_wallet_handler(
 
     ctx.accounts.user.claimed_to_his_own_wallet = true;
 
+    transfer_all_tokens(
+        ctx.accounts.claimer.to_account_info(),
+        ctx.accounts.user_account.to_account_info(),
+    )?;
+
     Ok(())
 }
 
@@ -63,4 +72,11 @@ pub struct ClaimUserToHisOwnWallet<'info> {
     pub new_token_account: UncheckedAccount<'info>,
 
     pub token_program: Program<'info, token::Token>,
+
+    // this is the new user account
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    #[account(mut)]
+    pub user_account: AccountInfo<'info>,
+
+    pub system_program: Program<'info, System>,
 }

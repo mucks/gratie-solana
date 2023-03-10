@@ -106,14 +106,14 @@ describe("gratie-solana", () => {
 
   // This should be called when the user logs in the first time to claim their account automatically
   it('claim-user', async () => {
-    await claimUser(program, wallet, USER_PASSWORD);
+    await claimUser(program, USER_PASSWORD);
   });
 
   it('claim-user-own-wallet', async () => {
     // test public key get this one from phantom wallet on application
-    const userPubKey = anchor.web3.Keypair.generate().publicKey;
+    const userKeypair = anchor.web3.Keypair.generate();
 
-    await claimUserToHisOwnWallet(program, wallet, userPubKey, USER_PASSWORD);
+    await claimUserToHisOwnWallet(program, userKeypair.publicKey, USER_PASSWORD);
   });
 
 

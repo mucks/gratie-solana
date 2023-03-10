@@ -71,10 +71,9 @@ pub mod gratie_solana {
 
     pub fn claim_user(
         ctx: Context<ClaimUser>,
-        new_user_public_key: Pubkey,
         new_user_encrypted_private_key: String,
     ) -> Result<()> {
-        claim_user_handler(ctx, new_user_public_key, new_user_encrypted_private_key)
+        claim_user_handler(ctx, new_user_encrypted_private_key)
     }
 
     pub fn claim_user_to_his_own_wallet(

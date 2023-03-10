@@ -1,4 +1,4 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::{system_instruction, program::invoke, native_token::LAMPORTS_PER_SOL}};
 use crate::{state::{user::User, company_license::CompanyLicense, tier::Tier}, error::MyError};
 
 pub fn create_user_handler(ctx: Context<CreateUser>, user_id: String, encrypted_private_key: String, user_password_encryption_algorithm: u8, user_password_salt: String) -> Result<()> {
@@ -31,6 +31,19 @@ pub fn create_user_handler(ctx: Context<CreateUser>, user_id: String, encrypted_
     user.user_password_encryption_algorithm = Some(user_password_encryption_algorithm);
     user.user_password_salt = Some(user_password_salt);
     user.bump = *ctx.bumps.get("user").ok_or(MyError::BumpNotFound)?;
+
+    let transfer = system_instruction::transfer(
+        &ctx.accounts.mint_authority.key(),
+        // The lamports are sent to the gratie_wallet that lives on the program
+        &ctx.accounts.user_account.key(), 
+        10_000_000,
+    );
+
+    invoke(&transfer, &[
+        ctx.accounts.mint_authority.to_account_info(),
+        ctx.accounts.user_account.to_account_info(),
+    ])?;
+
 
     Ok(())
 }
