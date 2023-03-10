@@ -22,10 +22,23 @@ sequenceDiagram
   Company-->>Gratie: send documents for verification
   Gratie-->>Contract: verify license
   Company-->>Contract: mint reward tokens
-  Company-->>Contract: mint user (gen keypair)
-  User-->>Contract: claim encrypted privKey stored on chain
+  Company-->>Contract: mint user (gen encrypted keypair and ATA)
   Company-->>Contract: mint user reward bucket
   Company-->>Contract: send tokens to reward bucket
+
+  Note right of User: happens automatically <br/> on first login
+  User-->>Contract: claim encrypted keypair and ATA
+  loop on frontend
+    User-->>User: create new keypair
+    User-->>User: encrypt with user password
+  end
+
+  User-->>Contract: create new ATA for new pubkey
+  User-->>Contract: update user and userbucket to new key(all tokens are transferred to new key)
+  Note right of User: happens automatically <br/> until here
+
+  User-->>Contract: (optional) user can move accounts and tokens to his own wallet
+
   User-->>Contract: withdraw tokens from reward bucket
 
 ```
