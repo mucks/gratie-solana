@@ -18,6 +18,8 @@ pub struct UserRewardsBucket {
 
     // timestamp when the bucket was claimed by the user
     pub claimed_at: Option<i64>,
+
+    pub balance: u64,
     pub bump: u8,
 }
 

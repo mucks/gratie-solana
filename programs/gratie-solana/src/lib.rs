@@ -69,6 +69,21 @@ pub mod gratie_solana {
         transfer_company_rewards_to_user_rewards_bucket_handler(ctx, amount)
     }
 
+    pub fn claim_user(
+        ctx: Context<ClaimUser>,
+        new_user_public_key: Pubkey,
+        new_user_encrypted_private_key: String,
+    ) -> Result<()> {
+        claim_user_handler(ctx, new_user_public_key, new_user_encrypted_private_key)
+    }
+
+    pub fn claim_user_to_his_own_wallet(
+        ctx: Context<ClaimUserToHisOwnWallet>,
+        new_user_public_key: Pubkey,
+    ) -> Result<()> {
+        claim_user_to_his_own_wallet_handler(ctx, new_user_public_key)
+    }
+
     pub fn create_user(
         ctx: Context<CreateUser>,
         company_name: String,

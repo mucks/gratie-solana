@@ -28,6 +28,16 @@ pub enum MyError {
     EncryptedPrivateKeyTooLong,
     #[msg("Invalid Token Account")]
     InvalidTokenAccount,
-    #[msg("Invalid TierType")]
-    InvalidTierType,
+    #[msg("Invalid Old Token Account")]
+    InvalidOldTokenAccount,
+    #[msg("Invalid New Account")]
+    InvalidNewTokenAccount,
+    #[msg("Invalid Tier")]
+    InvalidTier,
+    #[msg("User has already been claimed")]
+    UserAlreadyClaimed,
+    #[msg("User has not been claimed yet, user needs to be claimed in order to claim to his own wallet")]
+    UserNotClaimedYet,
+    #[msg("User has already been claimed to his own wallet")]
+    UserAlreadyClaimedToHisOwnWallet,
 }

@@ -4,8 +4,10 @@ use anchor_spl::token::{self, Token};
 use crate::{
     error::MyError,
     state::{
-        company_license::CompanyLicense, company_rewards_bucket::CompanyRewardsBucket, user::User,
-        user_rewards_bucket::UserRewardsBucket,
+        company_license::CompanyLicense,
+        company_rewards_bucket::CompanyRewardsBucket,
+        user::User,
+        user_rewards_bucket::{self, UserRewardsBucket},
     },
 };
 
@@ -32,6 +34,8 @@ pub fn transfer_company_rewards_to_user_rewards_bucket_handler(
     //TODO: verify that the amount is smaller than the balance of the company_rewards_bucket
 
     token::transfer(cpi_ctx, amount)?;
+
+    ctx.accounts.to.balance += amount;
 
     Ok(())
 }

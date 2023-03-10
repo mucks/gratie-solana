@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { Program, Wallet, SystemProgram } from "@project-serum/anchor";
 import { GratieSolana } from "../target/types/gratie_solana";
-import { TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createInitializeMintInstruction, MINT_SIZE } from '@solana/spl-token'
+import { TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createInitializeMintInstruction, MINT_SIZE, getOrCreateAssociatedTokenAccount, getAccount } from '@solana/spl-token'
 
 
 export const createTokenAccountForMint = async (program: Program<GratieSolana>, walletPublicKey: anchor.web3.PublicKey, mintKey: anchor.web3.PublicKey, user: anchor.web3.PublicKey) => {
@@ -20,6 +20,7 @@ export const createTokenAccountForMint = async (program: Program<GratieSolana>, 
   );
 
   await program.provider.sendAndConfirm(tx, []);
+
 
   return tokenAccount;
 

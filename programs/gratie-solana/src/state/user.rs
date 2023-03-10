@@ -31,6 +31,9 @@ pub struct User {
     pub user_password_encryption_algorithm: Option<u8>,
     pub user_password_salt: Option<String>,
 
+    pub claimed: bool,
+    pub claimed_to_his_own_wallet: bool,
+
     pub bump: u8,
 }
 

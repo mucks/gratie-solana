@@ -5,11 +5,14 @@ import { createTier } from "./tier";
 import { faker } from '@faker-js/faker';
 import { sha256 } from "@project-serum/anchor/dist/cjs/utils";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { createUser, createUserRewardsBucket, userGetPrivateKey } from "./user";
+import { claimUser, claimUserToHisOwnWallet, createUser, createUserRewardsBucket, userGetPrivateKey } from "./user";
 import { getGratieWalletPDA } from "./pda";
 import { createGratieWallet, withdrawFromGratieWallet } from "./gratieWallet";
 import { transferTokensToUser } from "./transfer";
 import { createCompanyLicense, createCompanyRewardsBucket, verifyCompanyLicense } from "./company";
+
+//NOTE: currently my wallet is the creator of the gratie wallet and the company license
+//      should add an extra company wallet and sign some of the transactions with that
 
 
 // THIS needs to be unique!
@@ -18,8 +21,13 @@ export const COMPANY_NAME = faker.company.name();
 export const USER_EMAIL = faker.internet.email();
 const email_sha = sha256.hash(USER_EMAIL);
 export const USER_ID = email_sha.substring(0, 16);
-// helloworld as argon2i encrypted password
-export const ENCRYPTED_USER_PASSWORD = "$argon2i$v=19$m=1024,t=2,p=1$c2FsdHNhbHQ$Zrfx9RLfUdXgnGUfUjBWAQ";
+
+// this is for testing the company does not need to provide
+// any plaintext passwords
+// they need to provide the encrypted password the salt and the hashing algorithm
+export const USER_PASSWORD = "helloworld";
+export const USER_PASSWORD_SALT = "saltsalt";
+
 
 describe("gratie-solana", () => {
 
@@ -94,6 +102,18 @@ describe("gratie-solana", () => {
     // transfer 5 tokens to user
     const amount = new anchor.BN(5);
     await transferTokensToUser(program, wallet, amount);
+  });
+
+  // This should be called when the user logs in the first time to claim their account automatically
+  it('claim-user', async () => {
+    await claimUser(program, wallet, USER_PASSWORD);
+  });
+
+  it('claim-user-own-wallet', async () => {
+    // test public key get this one from phantom wallet on application
+    const userPubKey = anchor.web3.Keypair.generate().publicKey;
+
+    await claimUserToHisOwnWallet(program, wallet, userPubKey, USER_PASSWORD);
   });
 
 

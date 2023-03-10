@@ -3,14 +3,15 @@ import { Program, Wallet } from "@project-serum/anchor";
 import AES from "crypto-js/aes";
 import { enc } from "crypto-js";
 import { base64 } from "@project-serum/anchor/dist/cjs/utils/bytes";
-import { getCompanyLicense, getCompanyLicensePDA, getCompanyRewardsBucket, getCompanyRewardsBucketPDA, getGratieWalletPDA, getTierPDA, getUserPDA, getUserRewardsBucketPDA, getUserRewardsBucketTokenAccountPDA } from "./pda";
+import { getCompanyLicensePDA, getCompanyRewardsBucket, getCompanyRewardsBucketPDA, getGratieWalletPDA, getTierPDA, getUserPDA, getUserRewardsBucketPDA, getUserRewardsBucketTokenAccountPDA } from "./pda";
 import { GratieSolana } from "../target/types/gratie_solana";
-import { COMPANY_NAME, ENCRYPTED_USER_PASSWORD, USER_EMAIL, USER_ID } from "./gratie-solana";
+import { COMPANY_NAME, USER_PASSWORD_SALT, USER_PASSWORD, USER_EMAIL, USER_ID } from "./gratie-solana";
 import { sha256 } from "@project-serum/anchor/dist/cjs/utils";
 import { createTokenAccountForMint } from "./util";
 import { expect } from "chai";
 import * as argon2 from "argon2";
-import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { PublicKey } from "@solana/web3.js";
 
 
 // To create a user the company needs to provide the encrypted user password the user email and the password encryption algorithm and the hash
@@ -26,8 +27,10 @@ export const createUser = async (program: Program<GratieSolana>, wallet: Wallet)
   const companyLicense = await program.account.companyLicense.fetch(companyLicensePDA);
   const userPDA = getUserPDA(program, companyLicensePDA, USER_ID);
 
+  const encryptedPassword = await encryptUserPassword(USER_PASSWORD, USER_PASSWORD_SALT);
+
   // encrypt the private key with the encrypted user password and the user id
-  const encKey = sha256.hash(ENCRYPTED_USER_PASSWORD + USER_ID);
+  const encKey = sha256.hash(encryptedPassword + USER_ID);
   const privKey = base64.encode(Buffer.from(user.secretKey));
 
   console.log("privKey: ", privKey);
@@ -55,6 +58,18 @@ export const createUser = async (program: Program<GratieSolana>, wallet: Wallet)
   return user.publicKey;
 };
 
+export const encryptUserPassword = async (userPasswordPlaintext: string, salt: string) => {
+  return await argon2.hash(userPasswordPlaintext,
+    {
+      salt: Buffer.from(Buffer.from(salt)),
+      memoryCost: 1024,
+      timeCost: 2,
+      hashLength: 16,
+      parallelism: 1,
+      type: argon2.argon2i,
+    });
+};
+
 // the user needs to have the encrypted user password to decrypt the private key
 export const userGetPrivateKey = async (program: Program<GratieSolana>, userPasswordPlaintext: string) => {
   const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
@@ -64,22 +79,20 @@ export const userGetPrivateKey = async (program: Program<GratieSolana>, userPass
   const userPDA = getUserPDA(program, companyLicensePDA, userId);
   const user = await program.account.user.fetch(userPDA);
 
+  let encKey = "";
 
-  // there's gonna be a lot of coading required to support different encryption algorithms
-  // maybe store these config settings as json in the user account
-  const encryptedUserPassword = await argon2.hash(userPasswordPlaintext,
-    {
-      salt: Buffer.from(user.userPasswordSalt),
-      memoryCost: 1024,
-      timeCost: 2,
-      hashLength: 16,
-      parallelism: 1,
-      type: argon2.argon2i,
-    });
+  if (user.claimed) {
+    encKey = sha256.hash(userPasswordPlaintext + userId);
+  } else {
+    const encryptedUserPassword = await encryptUserPassword(userPasswordPlaintext, user.userPasswordSalt);
 
-  console.log("encryptedUserPassword: ", encryptedUserPassword);
+    // there's gonna be a lot of coading required to support different encryption algorithms
+    // maybe store these config settings as json in the user account
+    console.log("encryptedUserPassword: ", encryptedUserPassword);
 
-  const encKey = sha256.hash(encryptedUserPassword + userId);
+    encKey = sha256.hash(encryptedUserPassword + userId);
+
+  }
 
   const decryptedPrivKey = AES.decrypt(user.encryptedPrivateKey, encKey).toString(enc.Utf8);
 
@@ -90,11 +103,14 @@ export const userGetPrivateKey = async (program: Program<GratieSolana>, userPass
 
   expect(keypair.publicKey.toBase58).equals(user.owner.toBase58);
 
+  return keypair;
+
 };
 
 const getAllUserRewardsBuckets = async (program: Program<GratieSolana>) => {
   return await program.account.userRewardsBucket.all();
 }
+
 
 export const createUserRewardsBucket = async (program: Program<GratieSolana>, wallet: Wallet) => {
   const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
@@ -121,3 +137,98 @@ export const createUserRewardsBucket = async (program: Program<GratieSolana>, wa
 
 }
 
+
+// claims the user to a new private key that is generated here
+export const claimUser = async (program: Program<GratieSolana>, wallet: Wallet, userPassword: string) => {
+  const newUserKeypair = anchor.web3.Keypair.generate();
+
+  const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
+  const companyRewardsBucket = await getCompanyRewardsBucket(program, companyLicensePDA);
+  const tokenMintPubkey = companyRewardsBucket.tokenMintKey;
+  const userPDA = getUserPDA(program, companyLicensePDA, USER_ID);
+  const user = await program.account.user.fetch(userPDA);
+
+  if (user.claimed) {
+    throw new Error("User already claimed");
+  }
+
+
+  const userRewardsBucketPDA = getUserRewardsBucketPDA(program, userPDA);
+  const userRewardsBucket = await program.account.userRewardsBucket.fetch(userRewardsBucketPDA);
+
+
+  const encKey = sha256.hash(userPassword + USER_ID);
+  const privKey = base64.encode(Buffer.from(newUserKeypair.secretKey));
+
+  const encryptedPrivateKey = AES.encrypt(privKey, encKey).toString();
+
+  //TODO: remove the need for company wallet here
+  const tokenAccount = await createTokenAccountForMint(program, wallet.publicKey, tokenMintPubkey, newUserKeypair.publicKey);
+  const acc = await program.provider.connection.getAccountInfo(tokenAccount);
+  console.log('tokenAccountInfo', acc);
+
+  console.log("newUserKeypair.publicKey: ", newUserKeypair.publicKey.toBase58());
+  console.log('newTokenAccount:', tokenAccount.toBase58());
+
+  //TODO: add the signer to anchor somehow
+  // so that the tests can sign with diffrent accounts
+
+
+  const oldUser = await userGetPrivateKey(program, userPassword);
+
+  await program.methods.claimUser(
+    newUserKeypair.publicKey, encryptedPrivateKey,
+  ).accounts({
+    claimer: user.owner,
+    user: userPDA,
+    userRewardsBucket: userRewardsBucketPDA,
+    oldTokenAccount: userRewardsBucket.tokenAccount,
+    newTokenAccount: tokenAccount,
+    tokenProgram: TOKEN_PROGRAM_ID,
+  }).signers([oldUser]).rpc();
+
+};
+
+export const claimUserToHisOwnWallet = async (program: Program<GratieSolana>, wallet: Wallet, userWallet: anchor.web3.PublicKey, userPassword: string) => {
+
+  const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
+  const companyRewardsBucket = await getCompanyRewardsBucket(program, companyLicensePDA);
+  const tokenMintPubkey = companyRewardsBucket.tokenMintKey;
+  const userPDA = getUserPDA(program, companyLicensePDA, USER_ID);
+  const user = await program.account.user.fetch(userPDA);
+
+  if (!user.claimed) {
+    throw new Error("User not claimed yet, user needs to be claimed before being able to claim to his own wallet");
+  }
+
+  if (user.claimedToHisOwnWallet) {
+    throw new Error("User already claimed to his own wallet");
+  }
+
+
+  const userRewardsBucketPDA = getUserRewardsBucketPDA(program, userPDA);
+  const userRewardsBucket = await program.account.userRewardsBucket.fetch(userRewardsBucketPDA);
+
+
+  //TODO: remove the need for company wallet here
+  const tokenAccount = await createTokenAccountForMint(program, wallet.publicKey, tokenMintPubkey, userWallet);
+  const acc = await program.provider.connection.getAccountInfo(tokenAccount);
+
+  //TODO: add the signer to anchor somehow
+  // so that the tests can sign with diffrent accounts
+
+
+  const oldUser = await userGetPrivateKey(program, userPassword);
+
+  await program.methods.claimUserToHisOwnWallet(
+    userWallet,
+  ).accounts({
+    claimer: user.owner,
+    user: userPDA,
+    userRewardsBucket: userRewardsBucketPDA,
+    oldTokenAccount: userRewardsBucket.tokenAccount,
+    newTokenAccount: tokenAccount,
+    tokenProgram: TOKEN_PROGRAM_ID,
+  }).signers([oldUser]).rpc();
+
+};

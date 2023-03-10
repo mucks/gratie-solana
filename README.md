@@ -36,8 +36,17 @@ sequenceDiagram
 Company: enterprise that wants to use gratie
 User: employee of the company
 
+
 * changing structure of accounts in the src/state folder might break the tests because existing accounts on the network will have a different structure
 * it would be great to have metaplex on the localnet
+
+
+### Ideas
+
+* User could potentially have multiple buckets, one for each company
+* User could see all these buckets in the same wallet
+* User could trade reward tokens from one company for reward tokens from another company
+
 
 ### How user buckets will be created and authenticated by user
 * the users keys will be encrypted by their email and password
