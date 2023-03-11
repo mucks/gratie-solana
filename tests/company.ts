@@ -10,11 +10,14 @@ import { createMintKeyAndTokenAccount } from "./util";
 export const createCompanyRewardsBucket = async (program: anchor.Program<GratieSolana>, wallet: anchor.Wallet) => {
   const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
   const companyRewardsBucketPDA = getCompanyRewardsBucketPDA(program, companyLicensePDA);
+  const tokenName = "Example Company Token";
+  const tokenSymbol = "ECT";
+  const tokenMetadataJsonUrl = "https://raw.githubusercontent.com/mucks/gratie-solana/master/assets/company-reward-tokens-sample.json";
 
   const { mintKey, tokenAccount } = await createMintKeyAndTokenAccount(program, wallet.publicKey);
 
 
-  await program.methods.createCompanyRewardsBucket(COMPANY_NAME).accounts({
+  await program.methods.createCompanyRewardsBucket(COMPANY_NAME, tokenName, tokenSymbol, tokenMetadataJsonUrl).accounts({
     mintAuthority: wallet.publicKey,
     companyLicense: companyLicensePDA,
     companyRewardsBucket: companyRewardsBucketPDA,
@@ -39,12 +42,11 @@ export const createCompanyLicense = async (program: anchor.Program<GratieSolana>
   const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
 
   const testEmail = "mail@mucks.dev";
-  const testLogoUri = "https://v2.akord.com/public/vaults/active/G8DOVyi_zmdssZVa6NFY5K1gKIKVW9q7gyXGhVltbsI/gallery#public/74959dec-5113-4b8b-89a0-a1e56ce8d89e";
   const testEvaluation = new anchor.BN(100000);
   const tierID = 1;
   const tierPDA = getTierPDA(program, tierID);
   const tier = await program.account.tier.fetch(tierPDA);
-
+  const tokenMetadataJsonUrl = "https://raw.githubusercontent.com/mucks/gratie-solana/master/assets/company-license-sample.json";
 
   const { mintKey, tokenAccount } = await createMintKeyAndTokenAccount(program, wallet.publicKey);
 
@@ -52,7 +54,7 @@ export const createCompanyLicense = async (program: anchor.Program<GratieSolana>
   const oldAmountEarned = gratieWalletBefore.amountEarned.toNumber();
 
 
-  await program.methods.createCompanyLicense(COMPANY_NAME, testEmail, testLogoUri, testEvaluation, tierID).accounts({
+  await program.methods.createCompanyLicense(COMPANY_NAME, testEmail, tokenMetadataJsonUrl, testEvaluation, tierID).accounts({
     mintAuthority: wallet.publicKey,
     companyLicense: companyLicensePDA,
     gratieWallet: getGratieWalletPDA(program),

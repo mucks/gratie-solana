@@ -12,9 +12,6 @@ pub struct CompanyLicense {
 
     pub name: String,
     pub email: String,
-    // images should be saved on arweave and the url should be stored here
-    // company_logo_uri: String,
-    pub logo_uri: String,
 
     // the evaluation of the company
     pub evaluation: u64,
@@ -24,7 +21,12 @@ pub struct CompanyLicense {
     pub verified: bool,
 
     // the token account of the company license
-    pub token_account: Option<Pubkey>,
+    pub token_account: Pubkey,
+
+    // metadata json for the company license token (for metaplex)
+    pub token_metadata_json_uri: String,
+
+    pub mint: Pubkey,
 
     pub user_count: u64,
 

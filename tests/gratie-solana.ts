@@ -10,6 +10,7 @@ import { getGratieWalletPDA } from "./pda";
 import { createGratieWallet, withdrawFromGratieWallet } from "./gratieWallet";
 import { transferTokensToUser } from "./transfer";
 import { createCompanyLicense, createCompanyRewardsBucket, verifyCompanyLicense } from "./company";
+import { addCompanyLicenseToMetaplex } from "./metaplex";
 
 //NOTE: currently my wallet is the creator of the gratie wallet and the company license
 //      should add an extra company wallet and sign some of the transactions with that
@@ -36,6 +37,15 @@ describe("gratie-solana", () => {
 
   const program = anchor.workspace.GratieSolana as Program<GratieSolana>
   const wallet = anchor.AnchorProvider.env().wallet as Wallet;
+
+
+  it('log', async () => {
+    const companyRewardBucket = await program.account.companyRewardsBucket.all();
+    console.log(companyRewardBucket);
+
+  });
+
+  return;
 
   it("create-gratie-wallet", async () => {
     try {
@@ -116,6 +126,9 @@ describe("gratie-solana", () => {
     await claimUserToHisOwnWallet(program, userKeypair.publicKey, USER_PASSWORD);
   });
 
+  it('add-company-license-to-metaplex', async () => {
+    await addCompanyLicenseToMetaplex(program, wallet, COMPANY_NAME);
+  });
 
 
   // it("mint-company-license-metaplex", async () => {

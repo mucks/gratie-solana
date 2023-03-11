@@ -13,17 +13,14 @@ use anchor_spl::token;
 // This transaction will fail if the name is too long or the wallet address already has a company license.
 // This license can already be queried in the frontend
 
-pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: String, email: String, logo_uri: String, evaluation: u64) -> Result<()> {
-    if ctx.accounts.company_license.token_account.is_some() {
-        return Err(MyError::CompanyLicenseAlreadyExists.into());
-    }
+pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: String, email: String, token_metadata_json_uri: String, evaluation: u64) -> Result<()> {
     if name.as_bytes().len() > 200 {
         return Err(MyError::NameTooLong.into());
     }
     if email.as_bytes().len() > 200 {
         return Err(MyError::EmailTooLong.into());
     }
-    if logo_uri.as_bytes().len() > 200 {
+    if token_metadata_json_uri.as_bytes().len() > 200 {
         return Err(MyError::UriTooLong.into());
     }
 
@@ -49,7 +46,7 @@ pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: 
 
     company_license.name = name;
     company_license.email = email;
-    company_license.logo_uri = logo_uri;
+    company_license.token_metadata_json_uri = token_metadata_json_uri;
     company_license.evaluation = evaluation;
     company_license.tier = ctx.accounts.tier.key();
     company_license.owner = ctx.accounts.mint_authority.key();
@@ -67,7 +64,8 @@ pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: 
     // Create a single token for the company license
     token::mint_to(cpi_ctx, 1)?;
 
-    company_license.token_account = Some(ctx.accounts.token_account.key());
+    company_license.token_account = ctx.accounts.token_account.key();
+    company_license.mint = ctx.accounts.mint.key();
 
 
     // TODO: figure out what the bump does exactly

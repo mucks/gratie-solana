@@ -13,6 +13,12 @@ pub struct CompanyRewardsBucket {
     // mint of the erc-20 tokens
     pub token_mint_key: Pubkey,
 
+    pub token_symbol: String,
+    pub token_name: String,
+
+    // metadata json for the reward tokens (for metaplex)
+    pub token_metadata_json_uri: String,
+
     pub user_rewards_bucket_count: u64,
 
     // timestamp when the bucket was created
@@ -22,5 +28,5 @@ pub struct CompanyRewardsBucket {
 }
 
 impl CompanyRewardsBucket {
-    pub const LEN: usize = std::mem::size_of::<Self>() + 200;
+    pub const LEN: usize = std::mem::size_of::<Self>() + 400;
 }

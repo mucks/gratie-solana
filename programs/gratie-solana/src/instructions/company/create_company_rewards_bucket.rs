@@ -6,6 +6,9 @@ use anchor_spl::token;
 
 pub fn create_company_rewards_bucket_handler(
     ctx: Context<CreateCompanyRewardsBucket>,
+    token_name: String,
+    token_symbol: String,
+    token_metadata_json_uri: String,
 ) -> Result<()> {
     let company_license = &mut ctx.accounts.company_license;
 
@@ -33,6 +36,9 @@ pub fn create_company_rewards_bucket_handler(
     company_rewards_bucket.token_mint_key = ctx.accounts.mint.key();
     company_rewards_bucket.user_rewards_bucket_count = 0;
     company_rewards_bucket.created_at = Clock::get()?.unix_timestamp;
+    company_rewards_bucket.token_name = token_name;
+    company_rewards_bucket.token_symbol = token_symbol;
+    company_rewards_bucket.token_metadata_json_uri = token_metadata_json_uri;
     
     // TODO: figure out what the bump does exactly
     company_rewards_bucket.bump = *ctx.bumps.get("company_rewards_bucket").ok_or(MyError::BumpNotFound)?;
@@ -41,7 +47,12 @@ pub fn create_company_rewards_bucket_handler(
 }
 
 #[derive(Accounts)]
-#[instruction(company_name: String)]
+#[instruction(
+    company_name: String, 
+    token_name: String,
+    token_symbol: String,
+    token_metadata_json_uri: String,
+)]
 pub struct CreateCompanyRewardsBucket<'info> {
     #[account(mut, address = company_license.owner)]
     pub mint_authority: Signer<'info>,

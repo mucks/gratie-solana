@@ -1,5 +1,4 @@
 use crate::instructions::*;
-use crate::metaplex::*;
 use anchor_lang::prelude::*;
 
 mod error;
@@ -18,6 +17,18 @@ declare_id!("AEf99S19YTaox9E8aX3ugpGJtHTHjaQtSY2ixtLysFGr");
 #[program]
 pub mod gratie_solana {
     use super::*;
+
+    pub fn add_company_license_to_metaplex(
+        ctx: Context<AddCompanyLicenseToMetaplexContext>,
+    ) -> Result<()> {
+        add_company_license_to_metaplex_handler(ctx)
+    }
+
+    pub fn add_company_reward_tokens_to_metaplex(
+        ctx: Context<AddCompanyRewardTokensToMetaplexContext>,
+    ) -> Result<()> {
+        add_company_reward_tokens_to_metaplex_handler(ctx)
+    }
 
     pub fn is_admin(ctx: Context<CheckIsAdminContext>, admin_pubkey: Pubkey) -> Result<()> {
         is_admin_handler(&admin_pubkey)
@@ -39,11 +50,11 @@ pub mod gratie_solana {
         ctx: Context<CreateCompanyLicense>,
         name: String,
         email: String,
-        logo_uri: String,
+        token_metadata_json_url: String,
         evaluation: u64,
         tier_id: u8,
     ) -> Result<()> {
-        create_company_license_handler(ctx, name, email, logo_uri, evaluation)
+        create_company_license_handler(ctx, name, email, token_metadata_json_url, evaluation)
     }
 
     // ERC-1155
@@ -59,8 +70,16 @@ pub mod gratie_solana {
     pub fn create_company_rewards_bucket(
         ctx: Context<CreateCompanyRewardsBucket>,
         company_name: String,
+        token_name: String,
+        token_symbol: String,
+        token_metadata_json_uri: String,
     ) -> Result<()> {
-        create_company_rewards_bucket_handler(ctx)
+        create_company_rewards_bucket_handler(
+            ctx,
+            token_name,
+            token_symbol,
+            token_metadata_json_uri,
+        )
     }
 
     pub fn transfer_company_rewards_to_user_rewards_bucket(
@@ -105,16 +124,6 @@ pub mod gratie_solana {
 
     pub fn verify_company_license(ctx: Context<VerifyCompanyLicense>) -> Result<()> {
         verify_company_license_handler(ctx)
-    }
-
-    pub fn mint_company_license_metaplex(
-        ctx: Context<MintCompanyLicenseMetaplex>,
-        creator_key: Pubkey,
-        uri: String,
-        title: String,
-    ) -> Result<()> {
-        mint_company_license_to_metaplex_handler(ctx, creator_key, uri, title)?;
-        Ok(())
     }
 
     pub fn create_tier(
