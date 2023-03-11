@@ -3,8 +3,8 @@
 use anchor_lang::prelude::*;
 
 use crate::{
-    admin::admin_pubkey,
     error::MyError,
+    instructions::is_admin_handler,
     state::gratie_wallet::{self, GratieWallet},
 };
 
@@ -12,6 +12,8 @@ pub fn withdraw_from_gratie_wallet_handler(
     ctx: Context<WithdrawFromGratieWallet>,
     amount_lamports: u64,
 ) -> Result<()> {
+    is_admin_handler(ctx.accounts.withdrawer.key)?;
+
     let gratie_wallet = &mut ctx.accounts.gratie_wallet;
     let withdrawer = &ctx.accounts.withdrawer;
 
@@ -32,7 +34,7 @@ pub fn withdraw_from_gratie_wallet_handler(
 pub struct WithdrawFromGratieWallet<'info> {
     // later all admins are allowed to withdraw
     // there should be limits on how much can be withdrawn by each admin and by day
-    #[account(mut, address = admin_pubkey())]
+    #[account(mut)]
     pub withdrawer: Signer<'info>,
     #[account(mut, seeds = [b"gratie_wallet".as_ref()], bump = gratie_wallet.bump)]
     pub gratie_wallet: Account<'info, GratieWallet>,

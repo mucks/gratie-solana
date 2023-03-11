@@ -1,6 +1,7 @@
-use crate::admin::admin_pubkey;
 use crate::{error::MyError, state::tier::Tier};
 use anchor_lang::prelude::*;
+
+use super::is_admin_handler;
 
 pub fn create_tier_handler(
     ctx: Context<CreateTier>,
@@ -11,6 +12,7 @@ pub fn create_tier_handler(
     additional_user_price_lamports: u64,
     platform_fee_permille: u16,
 ) -> Result<()> {
+    is_admin_handler(ctx.accounts.creator.key)?;
     let tier = &mut ctx.accounts.tier;
     tier.creator = *ctx.accounts.creator.key;
     tier.id = id;
@@ -26,7 +28,7 @@ pub fn create_tier_handler(
 #[derive(Accounts)]
 #[instruction(id: u8, name: String, free_user_limit: u32, price_lamports: u64, additional_user_price_lamports: u64, platform_fee_permille: u16)]
 pub struct CreateTier<'info> {
-    #[account(mut, address = admin_pubkey())]
+    #[account(mut)]
     pub creator: Signer<'info>,
     #[account(init, payer = creator, space = Tier::LEN, seeds = [b"tier".as_ref(), &[id]], bump)]
     pub tier: Account<'info, Tier>,

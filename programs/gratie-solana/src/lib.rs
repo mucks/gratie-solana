@@ -2,7 +2,6 @@ use crate::instructions::*;
 use crate::metaplex::*;
 use anchor_lang::prelude::*;
 
-mod admin;
 mod error;
 mod instructions;
 mod metaplex;
@@ -19,6 +18,10 @@ declare_id!("AEf99S19YTaox9E8aX3ugpGJtHTHjaQtSY2ixtLysFGr");
 #[program]
 pub mod gratie_solana {
     use super::*;
+
+    pub fn is_admin(ctx: Context<CheckIsAdminContext>, admin_pubkey: Pubkey) -> Result<()> {
+        is_admin_handler(&admin_pubkey)
+    }
 
     pub fn withdraw_from_gratie_wallet(
         ctx: Context<WithdrawFromGratieWallet>,
