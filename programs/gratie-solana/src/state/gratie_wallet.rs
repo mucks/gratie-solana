@@ -11,5 +11,5 @@ pub struct GratieWallet {
 }
 
 impl GratieWallet {
-    pub const LEN: usize = std::mem::size_of::<Self>() + 200;
+    pub const LEN: usize = std::mem::size_of::<Self>() + 50;
 }

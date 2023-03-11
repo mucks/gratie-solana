@@ -40,7 +40,7 @@ pub mod gratie_solana {
         evaluation: u64,
         tier_id: u8,
     ) -> Result<()> {
-        create_company_license_handler(ctx, name, email, logo_uri, evaluation, tier_id)
+        create_company_license_handler(ctx, name, email, logo_uri, evaluation)
     }
 
     // ERC-1155
@@ -133,11 +133,4 @@ pub mod gratie_solana {
             platform_fee_permille,
         )
     }
-
-    // pub fn exit(ctx: Context<Ctor>) -> Result<()> {
-    //     Ok(())
-    // }
 }
-
-#[derive(Accounts)]
-pub struct ExitContext {}

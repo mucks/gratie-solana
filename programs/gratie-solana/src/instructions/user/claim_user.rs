@@ -8,7 +8,7 @@ use anchor_spl::token::{self, Token};
 
 use crate::{
     error::MyError,
-    instructions::util::transfer_all_tokens,
+    instructions::util::transfer_all_lamports,
     state::{user::User, user_rewards_bucket::UserRewardsBucket},
 };
 
@@ -51,7 +51,7 @@ pub fn claim_user_handler(
     ctx.accounts.user_rewards_bucket.token_account = ctx.accounts.new_token_account.key();
     ctx.accounts.user.claimed = true;
 
-    transfer_all_tokens(
+    transfer_all_lamports(
         ctx.accounts.claimer.to_account_info(),
         ctx.accounts.user_account.to_account_info(),
     )?;

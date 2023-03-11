@@ -1,6 +1,6 @@
 use crate::{
     error::MyError,
-    instructions::util::transfer_all_tokens,
+    instructions::util::transfer_all_lamports,
     state::{user::User, user_rewards_bucket::UserRewardsBucket},
 };
 use anchor_lang::{
@@ -43,7 +43,7 @@ pub fn claim_user_to_his_own_wallet_handler(
 
     ctx.accounts.user.claimed_to_his_own_wallet = true;
 
-    transfer_all_tokens(
+    transfer_all_lamports(
         ctx.accounts.claimer.to_account_info(),
         ctx.accounts.user_account.to_account_info(),
     )?;

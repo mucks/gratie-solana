@@ -5,7 +5,7 @@ import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { getTierPDA } from "./pda";
 
 export const createTier = async (program: Program<GratieSolana>, walletPubKey: anchor.web3.PublicKey) => {
-  const tierID = 0;
+  const tierID = 1;
   const name = "fractal";
   const freeUserAmount = 500;
   const price = new BN(3 * LAMPORTS_PER_SOL);

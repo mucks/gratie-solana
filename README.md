@@ -53,6 +53,8 @@ User: employee of the company
 * changing structure of accounts in the src/state folder might break the tests because existing accounts on the network will have a different structure
 * it would be great to have metaplex on the localnet
 
+* having an ERC-1155 for every user is probably very costly because of the storage, maybe we can use an ATA for every user.
+
 
 ### Ideas
 

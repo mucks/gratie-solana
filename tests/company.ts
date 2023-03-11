@@ -41,7 +41,7 @@ export const createCompanyLicense = async (program: anchor.Program<GratieSolana>
   const testEmail = "mail@mucks.dev";
   const testLogoUri = "https://v2.akord.com/public/vaults/active/G8DOVyi_zmdssZVa6NFY5K1gKIKVW9q7gyXGhVltbsI/gallery#public/74959dec-5113-4b8b-89a0-a1e56ce8d89e";
   const testEvaluation = new anchor.BN(100000);
-  const tierID = 0;
+  const tierID = 1;
   const tierPDA = getTierPDA(program, tierID);
   const tier = await program.account.tier.fetch(tierPDA);
 
@@ -63,6 +63,7 @@ export const createCompanyLicense = async (program: anchor.Program<GratieSolana>
   }).rpc();
 
   const companyLicense = await getCompanyLicense(program, COMPANY_NAME);
+  console.log(companyLicense);
   expect(companyLicense.name).to.equal(COMPANY_NAME);
 
   // check if the amountEarned increased by the price of the tier
