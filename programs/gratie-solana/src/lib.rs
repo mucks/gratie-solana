@@ -3,13 +3,12 @@ use anchor_lang::prelude::*;
 
 mod error;
 mod instructions;
-mod metaplex;
 mod state;
 
 // NOTE: program id changes when me change the account structure
 
 // The Id of our program.
-declare_id!("AEf99S19YTaox9E8aX3ugpGJtHTHjaQtSY2ixtLysFGr");
+declare_id!("FmG2zTeSd4rStaj6FD9W8WipbXGjDyF3e3btXTqBFbky");
 
 // If there is an index len error make sure that every method has a context
 

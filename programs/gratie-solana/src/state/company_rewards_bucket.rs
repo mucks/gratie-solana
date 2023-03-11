@@ -15,7 +15,6 @@ pub struct CompanyRewardsBucket {
 
     pub token_symbol: String,
     pub token_name: String,
-
     // metadata json for the reward tokens (for metaplex)
     pub token_metadata_json_uri: String,
 

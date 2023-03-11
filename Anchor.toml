@@ -1,14 +1,14 @@
 [features]
 seeds = false
 skip-lint = false
-[programs.localnet]
-gratie_solana = "AEf99S19YTaox9E8aX3ugpGJtHTHjaQtSY2ixtLysFGr"
+[programs.testnet]
+gratie_solana = "FmG2zTeSd4rStaj6FD9W8WipbXGjDyF3e3btXTqBFbky"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "testnet"
 wallet = "/home/mucks/.config/solana/id.json"
 
 [scripts]

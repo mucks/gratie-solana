@@ -34,7 +34,7 @@ pub fn add_company_reward_tokens_to_metaplex_handler(
         ctx.accounts.company_license_owner.key(),
         ctx.accounts.company_license_owner.key(),
         // title
-        ctx.accounts.company_license.name.clone(),
+        ctx.accounts.company_rewards_bucket.token_name.clone(),
         ctx.accounts.company_rewards_bucket.token_symbol.clone(),
         ctx.accounts
             .company_rewards_bucket
@@ -71,11 +71,11 @@ pub struct AddCompanyRewardTokensToMetaplexContext<'info> {
     pub rent: AccountInfo<'info>,
 
     /// CHECK: This is not dangerous because we don't read or write from this account
-    #[account(mut, address = company_license.token_account)]
+    #[account(mut, address = company_rewards_bucket.token_account)]
     pub token_account: UncheckedAccount<'info>,
 
     /// CHECK: This is not dangerous because we don't read or write from this account
-    #[account(mut, address = company_license.mint)]
+    #[account(mut, address = company_rewards_bucket.token_mint_key)]
     pub mint: UncheckedAccount<'info>,
 
     // Related to metaplex

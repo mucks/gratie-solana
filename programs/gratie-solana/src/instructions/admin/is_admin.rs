@@ -15,8 +15,11 @@ pub struct CheckIsAdminContext {}
 
 fn admins() -> Vec<Pubkey> {
     vec![
-        Pubkey::from_str("3BS9v3KU5TBgavqr9Ws2hmKLs4cD8MjdvvMUrcBTQayw").unwrap(),
+        // mucks
+        Pubkey::from_str("EeuPm1L85Vcxh5o3CA3ESCAT1r58EjYvsFWUvhWYDAu7").unwrap(),
+        // selva
         Pubkey::from_str("CHkVNFD1gSrF6pruwF4FxJ3JuPymTZEzuKvFau3tEGkC").unwrap(),
+        // ragul
         Pubkey::from_str("FYYQrD437f5mxszLKtutCWd3EKdHmpbuayudBdWwbu8W").unwrap(),
     ]
 }
