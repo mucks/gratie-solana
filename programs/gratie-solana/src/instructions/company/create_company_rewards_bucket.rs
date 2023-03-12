@@ -2,7 +2,7 @@ use crate::error::MyError;
 use crate::state::company_license::CompanyLicense;
 use crate::state::company_rewards_bucket::CompanyRewardsBucket;
 use anchor_lang::prelude::*;
-use anchor_spl::token;
+use anchor_spl::token::{self, TokenAccount, Mint};
 
 pub fn create_company_rewards_bucket_handler(
     ctx: Context<CreateCompanyRewardsBucket>,
@@ -72,13 +72,11 @@ pub struct CreateCompanyRewardsBucket<'info> {
     
     pub system_program: Program<'info, System>,
 
-    /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
-    pub mint: UncheckedAccount<'info>,
+    pub mint: Account<'info, Mint>,
 
-    /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
-    pub token_account: UncheckedAccount<'info>,
+    pub token_account: Account<'info, TokenAccount>,
 
     // The token program is the program that will be used to mint the token.
     pub token_program: Program<'info, token::Token>,

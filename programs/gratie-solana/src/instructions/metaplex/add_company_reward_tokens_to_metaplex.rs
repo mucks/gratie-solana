@@ -3,7 +3,7 @@
 
 use crate::state::{company_license::CompanyLicense, company_rewards_bucket::CompanyRewardsBucket};
 use anchor_lang::{prelude::*, solana_program::program::invoke};
-use anchor_spl::token;
+use anchor_spl::token::{self, Mint, TokenAccount};
 use mpl_token_metadata::instruction::create_metadata_accounts_v3;
 
 pub fn add_company_reward_tokens_to_metaplex_handler(
@@ -70,13 +70,11 @@ pub struct AddCompanyRewardTokensToMetaplexContext<'info> {
     /// CHECK: This is not dangerous because we don't read or write from this account
     pub rent: AccountInfo<'info>,
 
-    /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut, address = company_rewards_bucket.token_account)]
-    pub token_account: UncheckedAccount<'info>,
+    pub token_account: Account<'info, TokenAccount>,
 
-    /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut, address = company_rewards_bucket.token_mint_key)]
-    pub mint: UncheckedAccount<'info>,
+    pub mint: Account<'info, Mint>,
 
     // Related to metaplex
     /// CHECK: This is not dangerous because we don't read or write from this account

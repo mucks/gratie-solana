@@ -1,4 +1,4 @@
-name: Solana Action name
+name: Anchor Test
 on:
   push:
     branches: [master]

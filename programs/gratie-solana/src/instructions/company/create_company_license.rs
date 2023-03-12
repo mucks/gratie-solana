@@ -5,7 +5,7 @@ use crate::state::company_license::CompanyLicense;
 use crate::error::MyError;
 use crate::state::gratie_wallet::GratieWallet;
 use crate::state::tier::Tier;
-use anchor_spl::token;
+use anchor_spl::token::{self, Mint, TokenAccount};
 
 // This creates a unique company license for each wallet address.
 // Note: the name here is not unique
@@ -101,12 +101,12 @@ pub struct CreateCompanyLicense<'info> {
     pub gratie_wallet: Account<'info, GratieWallet>,
 
     pub system_program: Program<'info, System>,
-    /// CHECK: This is not dangerous because we don't read or write from this account
+
     #[account(mut)]
-    pub mint: UncheckedAccount<'info>,
-    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub mint: Account<'info, Mint>,
+
     #[account(mut)]
-    pub token_account: UncheckedAccount<'info>,
+    pub token_account: Account<'info, TokenAccount>,
     
     // The token program is the program that will be used to mint the token.
     pub token_program: Program<'info, token::Token>,

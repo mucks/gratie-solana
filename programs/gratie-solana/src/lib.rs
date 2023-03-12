@@ -17,6 +17,10 @@ declare_id!("FmG2zTeSd4rStaj6FD9W8WipbXGjDyF3e3btXTqBFbky");
 pub mod gratie_solana {
     use super::*;
 
+    pub fn delete_company_license(ctx: Context<DeleteCompanyLicense>) -> Result<()> {
+        delete_company_license_handler(ctx)
+    }
+
     pub fn add_company_license_to_metaplex(
         ctx: Context<AddCompanyLicenseToMetaplexContext>,
     ) -> Result<()> {

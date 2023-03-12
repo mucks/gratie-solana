@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint};
+use anchor_spl::token::{self, Mint, TokenAccount};
 use crate::{state::{user_rewards_bucket::UserRewardsBucket, company_license::{CompanyLicense}, user::{User}, company_rewards_bucket::CompanyRewardsBucket, tier::Tier}, error::MyError};
 
 // a user can currently only have one bucket maximum
@@ -60,7 +60,6 @@ pub struct CreateUserRewardsBucket<'info> {
     pub user_rewards_bucket: Account<'info, UserRewardsBucket>,
     pub system_program: Program<'info, System>,
 
-    /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
-    pub token_account: UncheckedAccount<'info>,
+    pub token_account: Account<'info, TokenAccount>,
 }

@@ -9,7 +9,7 @@ import { claimUser, claimUserToHisOwnWallet, createUser, createUserRewardsBucket
 import { getGratieWalletPDA } from "./pda";
 import { createGratieWallet, withdrawFromGratieWallet } from "./gratieWallet";
 import { transferTokensToUser } from "./transfer";
-import { createCompanyLicense, createCompanyRewardsBucket, verifyCompanyLicense } from "./company";
+import { createCompanyLicense, createCompanyRewardsBucket, deleteCompanyLicense, verifyCompanyLicense } from "./company";
 import { addCompanyLicenseToMetaplex, addCompanyRewardTokensToMetaplex } from "./metaplex";
 
 //NOTE: currently my wallet is the creator of the gratie wallet and the company license
@@ -74,6 +74,7 @@ describe("gratie-solana", () => {
   it('create-company-license', async () => {
     await createCompanyLicense(program, wallet);
   });
+
 
   it('withdraw-from-gratie-wallet', async () => {
     await withdrawFromGratieWallet(program, wallet, 1 * LAMPORTS_PER_SOL);
@@ -140,6 +141,10 @@ describe("gratie-solana", () => {
     });
 
   }
+
+  it('delete-company-license', async () => {
+    await deleteCompanyLicense(program, wallet);
+  });
 
 });
 

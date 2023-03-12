@@ -1,13 +1,18 @@
 import * as anchor from "@project-serum/anchor";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { expect } from "chai";
+// import { expect } from "chai";
 import { GratieSolana } from "../target/types/gratie_solana";
 import { COMPANY_NAME } from "./gratie-solana";
-import { getCompanyLicense, getCompanyLicensePDA, getCompanyRewardsBucketPDA, getGratieWalletPDA, getTierPDA } from "./pda";
+import { getCompanyLicense, getCompanyLicensePDA, getCompanyRewardsBucket, getCompanyRewardsBucketPDA, getGratieWalletPDA, getTierPDA } from "./pda";
 import { createMintKeyAndTokenAccount } from "./util";
 
+import chai from "chai";
+import chaiPromised from "chai-as-promised";
+chai.use(chaiPromised);
+const { expect } = chai;
 
 export const createCompanyRewardsBucket = async (program: anchor.Program<GratieSolana>, wallet: anchor.Wallet) => {
+
   const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
   const companyRewardsBucketPDA = getCompanyRewardsBucketPDA(program, companyLicensePDA);
   const tokenName = "Example Company Token";
@@ -25,6 +30,8 @@ export const createCompanyRewardsBucket = async (program: anchor.Program<GratieS
     tokenAccount: tokenAccount,
     tokenProgram: TOKEN_PROGRAM_ID,
   }).rpc();
+
+
 
 }
 
@@ -73,4 +80,17 @@ export const createCompanyLicense = async (program: anchor.Program<GratieSolana>
   const amountEarnedDiff = gratieWallet.amountEarned.toNumber() - oldAmountEarned;
   expect(amountEarnedDiff).to.equal(tier.priceLamports.toNumber());
 }
+
+export const deleteCompanyLicense = async (program: anchor.Program<GratieSolana>, wallet: anchor.Wallet) => {
+  const companyLicensePDA = getCompanyLicensePDA(program, COMPANY_NAME);
+  const companyLicense = await getCompanyLicense(program, COMPANY_NAME);
+  await program.methods.deleteCompanyLicense().accounts({
+    companyLicenseOwner: wallet.publicKey,
+    companyLicense: companyLicensePDA,
+    companyLicenseTokenAccount: companyLicense.tokenAccount,
+    mint: companyLicense.mint,
+    tokenProgram: TOKEN_PROGRAM_ID
+  }).rpc();
+  await expect(getCompanyLicense(program, COMPANY_NAME)).to.eventually.be.rejected;
+};
 

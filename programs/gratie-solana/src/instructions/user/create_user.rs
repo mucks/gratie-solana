@@ -66,7 +66,7 @@ pub struct CreateUser<'info> {
     #[account(address = company_license.tier)]
     pub tier: Account<'info, Tier>,
 
-
+    // TODO: figure out which account to use here
     /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
     pub user_account: AccountInfo<'info>,
