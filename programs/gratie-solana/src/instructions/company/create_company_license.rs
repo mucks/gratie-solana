@@ -51,6 +51,10 @@ pub fn create_company_license_handler(ctx: Context<CreateCompanyLicense>, name: 
     company_license.tier = ctx.accounts.tier.key();
     company_license.owner = ctx.accounts.mint_authority.key();
 
+    // NOTE: currently implementing auto verification for testing purposes
+    // TODO: remove this
+    company_license.verified = true;
+
     // Create the token
     let cpi_accounts = token::MintTo {
         mint: ctx.accounts.mint.to_account_info(),
