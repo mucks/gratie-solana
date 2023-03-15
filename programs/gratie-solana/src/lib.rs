@@ -8,7 +8,7 @@ mod state;
 // NOTE: program id changes when me change the account structure
 
 // The Id of our program.
-declare_id!("FmG2zTeSd4rStaj6FD9W8WipbXGjDyF3e3btXTqBFbky");
+declare_id!("3tk9foNJ24cchnm87KusX9L9BoWhZxzWrhV5hPBUzQcH");
 
 // If there is an index len error make sure that every method has a context
 
